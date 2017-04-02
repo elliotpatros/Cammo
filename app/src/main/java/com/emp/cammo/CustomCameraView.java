@@ -87,6 +87,10 @@ public class CustomCameraView extends JavaCameraView {
         return mCameraId;
     }
 
+    public boolean frontCameraActive() {
+        return mCameraId == CamId.front;
+    }
+
     private void setupCameraErrorHandling() {
         mCamera.setErrorCallback(new Camera.ErrorCallback() {
             @Override

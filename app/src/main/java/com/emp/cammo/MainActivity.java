@@ -4,7 +4,6 @@ import android.content.res.Configuration;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowManager;
@@ -112,42 +111,34 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     public void onCameraViewStarted(int width, int height) {
         // setup image buffer just once before streaming
         _img = new Mat(height, width, CvType.CV_8UC1);
-
-        _calibrator = new Calibrator(height, width);
+        _calibrator = new Calibrator();
     }
 
     @Override
     public void onCameraViewStopped() {
         // after streaming, 'free' image buffer
         _img.release();
-        _calibrator.release();
     }
-
-
 
     @Override
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
-
         // tell the camera that everything is working
         _cameraView.itsWorking();
 
         // get grayscale image from camera (flip LR if its the front camera)
         _img = inputFrame.gray();
-        if (_cameraView.getCameraId() == CamId.front) {
+        if (_cameraView.frontCameraActive()) {
             Core.flip(_img, _img, 1); // flip horizontally (when flipCode > 0)
         }
 
         // find checkerboard
         _calibrator.findBoard(_img);
 
-//        Log.i(TAG, "onCameraFrame..." + found);
-
-
-        // draw rectangle
-//        Imgproc.rectangle(_img, new Point(10, 10), new Point(100, 100), new Scalar(0, 255, 0));
-
-        // return image to be shown on screen
-        return _img;
+        // return image to be displayed on screen
+        if (_img == null)
+            return inputFrame.rgba();
+        else
+            return _img;
     }
 }
 

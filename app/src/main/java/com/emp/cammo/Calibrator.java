@@ -1,55 +1,70 @@
 package com.emp.cammo;
 
-import org.opencv.core.CvType;
+import android.os.AsyncTask;
+
 import org.opencv.core.Mat;
-import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
-import org.opencv.core.Point;
-import org.opencv.core.Rect;
-import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
-import static org.opencv.calib3d.Calib3d.CALIB_CB_ADAPTIVE_THRESH;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 import static org.opencv.calib3d.Calib3d.CALIB_CB_FAST_CHECK;
-import static org.opencv.calib3d.Calib3d.CALIB_CB_NORMALIZE_IMAGE;
+import static org.opencv.calib3d.Calib3d.CALIB_USE_LU;
 import static org.opencv.calib3d.Calib3d.drawChessboardCorners;
 import static org.opencv.calib3d.Calib3d.findChessboardCorners;
-import static org.opencv.imgproc.Imgproc.drawContours;
 
 public class Calibrator {
     private MatOfPoint2f _corners;
     private MatOfPoint2f _approxCurve;
     private Size _boardSize;
 
-    public Calibrator(int width, int height) {
+    public Calibrator() {
         _corners = new MatOfPoint2f();
         _approxCurve = new MatOfPoint2f();
         _boardSize = new Size(5, 4);
     }
 
-    public void release() {
+    // find checkerboard
+    public Mat findBoard(Mat src) {
+        Finder finder = new Finder();
+        finder.execute(src);
+        try {
+            finder.get(200, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            return null;
+        } catch (ExecutionException e) {
+            return null;
+        } catch (TimeoutException e) {
+            return null;
+        }
+
+        return src;
     }
 
-    // find checkerboard
-    public void findBoard(Mat src) {
-//        Imgproc.cvtColor(src, _grayImage, Imgproc.COLOR_BGR2GRAY);
+    private class Finder extends AsyncTask<Mat, Void, Void> {
+        @Override
+        protected Void doInBackground(Mat... params) {
+            boolean found = findChessboardCorners(params[0], _boardSize, _corners, CALIB_CB_FAST_CHECK + CALIB_USE_LU);
 
-        boolean found = findChessboardCorners(src, _boardSize, _corners, CALIB_CB_FAST_CHECK);
+            if (found) {
+                double approxDistance = Imgproc.arcLength(_corners, true) * 0.02;
+                Imgproc.approxPolyDP(_corners, _approxCurve, approxDistance, true);
 
-        if (found) {
-            double approxDistance = Imgproc.arcLength(_corners, true) * 0.02;
-            Imgproc.approxPolyDP(_corners, _approxCurve, approxDistance, true);
+//            MatOfPoint points = new MatOfPoint(_approxCurve.toArray());
+//
+//            Rect rect = Imgproc.boundingRect(points);
+//            Point topL = new Point(rect.x, rect.y);
+//            Point botR = new Point(rect.x + rect.width, rect.y + rect.height);
+//
+//            Imgproc.rectangle(src, topL, botR, new Scalar(0), 2);
 
-            MatOfPoint points = new MatOfPoint(_approxCurve.toArray());
+                drawChessboardCorners(params[0], _boardSize, _corners, found);
+            }
 
-            Rect rect = Imgproc.boundingRect(points);
-            Point topL = new Point(rect.x, rect.y);
-            Point botR = new Point(rect.x + rect.width, rect.y + rect.height);
-
-            Imgproc.rectangle(src, topL, botR, new Scalar(0));
-
-            drawChessboardCorners(src, _boardSize, _corners, found);
+            return null;
         }
     }
 }
