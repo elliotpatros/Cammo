@@ -27,7 +27,7 @@ public class CustomCameraView extends JavaCameraView {
     @Override
     public void surfaceChanged(SurfaceHolder arg0, int arg1, int arg2, int arg3) {
         super.surfaceChanged(arg0, arg1, arg2, arg3);
-        // setMaxResolution();
+//         setMaxResolution();
     }
 
     public void initialize() {
@@ -53,22 +53,38 @@ public class CustomCameraView extends JavaCameraView {
         connectCamera(getWidth(), getHeight());
     }
 
-    private void setMaxResolution() {
+    public void setMinResolution() {
         // get supported sizes
         if (mCamera == null) return;
-        List<Camera.Size> sizes = mCamera.getParameters().getSupportedPreviewSizes();
-        if (sizes == null) return; // sizes guaranteed not to be null
+        List<Camera.Size> sizes = mCamera.getParameters().getSupportedPictureSizes();
+        if (sizes == null) return; // sizes guaranteed not to be empty
 
-        // sort from largest to smallest
+        // sort from smallest to largest
         Collections.sort(sizes, new Comparator<Camera.Size>() {
             @Override
             public int compare(Camera.Size a, Camera.Size b) {
-                return b.width * b.height - a.width * a.height;
+                return a.width * a.height - b.width * b.height;
             }
         });
 
-        // set largest size
+        // set smallest size
         setResolution(sizes.get(0));
+
+//        // get supported sizes
+//        if (mCamera == null) return;
+//        List<Camera.Size> sizes = mCamera.getParameters().getSupportedPreviewSizes();
+//        if (sizes == null) return; // sizes guaranteed not to be null
+//
+//        // sort from largest to smallest
+//        Collections.sort(sizes, new Comparator<Camera.Size>() {
+//            @Override
+//            public int compare(Camera.Size a, Camera.Size b) {
+//                return a.width * a.height - b.width * b.height;
+//            }
+//        });
+//
+//        // set largest size
+//        setResolution(sizes.get(0));
     }
 
     // camera id

@@ -112,6 +112,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         // setup image buffer just once before streaming
         _img = new Mat(height, width, CvType.CV_8UC1);
         _calibrator = new Calibrator();
+        _cameraView.setMinResolution();
     }
 
     @Override

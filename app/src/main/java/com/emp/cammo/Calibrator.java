@@ -24,7 +24,7 @@ public class Calibrator {
     public Calibrator() {
         _corners = new MatOfPoint2f();
         _approxCurve = new MatOfPoint2f();
-        _boardSize = new Size(5, 4);
+        _boardSize = new Size(4, 3);
     }
 
     // find checkerboard
@@ -32,7 +32,7 @@ public class Calibrator {
         Finder finder = new Finder();
         finder.execute(src);
         try {
-            finder.get(200, TimeUnit.MILLISECONDS);
+            finder.get(100, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             return null;
         } catch (ExecutionException e) {
@@ -48,10 +48,11 @@ public class Calibrator {
         @Override
         protected Void doInBackground(Mat... params) {
             boolean found = findChessboardCorners(params[0], _boardSize, _corners, CALIB_CB_FAST_CHECK + CALIB_USE_LU);
+            drawChessboardCorners(params[0], _boardSize, _corners, found);
 
-            if (found) {
-                double approxDistance = Imgproc.arcLength(_corners, true) * 0.02;
-                Imgproc.approxPolyDP(_corners, _approxCurve, approxDistance, true);
+//            if (found) {
+//                double approxDistance = Imgproc.arcLength(_corners, true) * 0.02;
+//                Imgproc.approxPolyDP(_corners, _approxCurve, approxDistance, true);
 
 //            MatOfPoint points = new MatOfPoint(_approxCurve.toArray());
 //
@@ -61,8 +62,8 @@ public class Calibrator {
 //
 //            Imgproc.rectangle(src, topL, botR, new Scalar(0), 2);
 
-                drawChessboardCorners(params[0], _boardSize, _corners, found);
-            }
+//                drawChessboardCorners(params[0], _boardSize, _corners, true);
+//            }
 
             return null;
         }
