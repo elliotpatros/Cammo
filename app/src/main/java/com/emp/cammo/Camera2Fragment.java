@@ -51,7 +51,7 @@ import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
-public class Camera2Fragment extends Fragment implements View.OnClickListener {
+public class Camera2Fragment extends Fragment implements View.OnClickListener {//, SurfaceTexture.OnFrameAvailableListener {
     private static final String TAG = "Camera2Fragment";
 
     // conversions from screen rotation to jpeg orientation
@@ -119,6 +119,11 @@ public class Camera2Fragment extends Fragment implements View.OnClickListener {
         mFile = new File(getActivity().getExternalFilesDir(null), "pic.jpg");
     }
 
+    //    @Override
+//    public void onFrameAvailable(SurfaceTexture surfaceTexture) {
+//        Log.i(TAG, "onFrameAvailable: HELLO");
+//    }
+
     @Override
     public void onResume() {
         super.onResume();
@@ -147,6 +152,7 @@ public class Camera2Fragment extends Fragment implements View.OnClickListener {
             = new TextureView.SurfaceTextureListener() {
         @Override
         public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
+//            surface.setOnFrameAvailableListener((SurfaceTexture.OnFrameAvailableListener) getParentFragment(), mBackgroundHandler);
             openCamera(width, height);
         }
 
@@ -266,10 +272,8 @@ public class Camera2Fragment extends Fragment implements View.OnClickListener {
                 Size largest = Collections.max(
                         Arrays.asList(map.getOutputSizes(ImageFormat.JPEG)),
                         new CompareSizesByArea());
-                mImageReader = ImageReader.newInstance(largest.getWidth(), largest.getHeight(),
-                        ImageFormat.JPEG, /*maxImages*/2);
-                mImageReader.setOnImageAvailableListener(
-                        mOnImageAvailableListener, mBackgroundHandler);
+                mImageReader = ImageReader.newInstance(largest.getWidth(), largest.getHeight(), ImageFormat.JPEG, /*maxImages*/2);
+                mImageReader.setOnImageAvailableListener(mOnImageAvailableListener, mBackgroundHandler);
 
                 // Find out if we need to swap dimension to get the preview size relative to sensor
                 // coordinate.
@@ -582,8 +586,7 @@ public class Camera2Fragment extends Fragment implements View.OnClickListener {
                     CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_START);
             // Tell #mCaptureCallback to wait for the precapture sequence to be set.
             mState = STATE_WAITING_PRECAPTURE;
-            mCaptureSession.capture(mPreviewRequestBuilder.build(), mCaptureCallback,
-                    mBackgroundHandler);
+            mCaptureSession.capture(mPreviewRequestBuilder.build(), mCaptureCallback, mBackgroundHandler);
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
@@ -652,7 +655,8 @@ public class Camera2Fragment extends Fragment implements View.OnClickListener {
             = new ImageReader.OnImageAvailableListener() {
         @Override
         public void onImageAvailable(ImageReader reader) {
-            mBackgroundHandler.post(new ImageSaver(reader.acquireNextImage(), mFile));
+//            mBackgroundHandler.post(new ImageSaver(reader.acquireNextImage(), mFile));
+
         }
 
     };
@@ -690,7 +694,7 @@ public class Camera2Fragment extends Fragment implements View.OnClickListener {
     }
 
     // compares two sizes based on their areas
-    static class CompareSizesByArea implements Comparator<Size> {
+    private static class CompareSizesByArea implements Comparator<Size> {
         @Override
         public int compare(Size a, Size b) {
             return Long.signum((long)a.getWidth() * a.getHeight() - (long)b.getWidth() * b.getHeight());
