@@ -4,18 +4,27 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:padding="@dimen/spacing_medium"
+    android:layout_margin="0dp"
+    android:weightSum="2"
     tools:context="com.emp.cammo.FragmentMainMenu" >
 
     <Button
-        android:id="@+id/goto_calibration"
+        android:id="@+id/btn_goto_calibration"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/btn_calibrate" />
+        android:layout_margin="0dp"
+        android:padding="0dp"
+        android:text="@string/btn_calibrate"
+        android:layout_weight="1" />
 
     <Button
-        android:id="@+id/goto_tracking"
+        android:id="@+id/btn_goto_tracking"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/btn_tracking" />
+        android:layout_margin="0dp"
+        android:padding="0dp"
+        android:text="@string/btn_tracking"
+        android:layout_weight="1" />
 
 </LinearLayout>

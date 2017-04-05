@@ -24,7 +24,7 @@ public class FragmentMainMenu extends Fragment {
         MainActivity activity = (MainActivity) getActivity();
         if (null == activity) return;
 
-        view.findViewById(R.id.goto_calibration).setOnClickListener(activity);
-        view.findViewById(R.id.goto_tracking).setOnClickListener(activity);
+        view.findViewById(R.id.btn_goto_calibration).setOnClickListener(activity);
+        view.findViewById(R.id.btn_goto_tracking).setOnClickListener(activity);
     }
 }
