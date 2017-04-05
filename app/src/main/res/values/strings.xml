@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Cammo</string>
+    <string name="btn_calibrate">Calibrate</string>
+    <string name="btn_tracking">track</string>
 </resources>
