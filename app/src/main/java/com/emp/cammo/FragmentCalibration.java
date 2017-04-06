@@ -6,12 +6,16 @@ import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ProgressBar;
 
 public class FragmentCalibration extends Fragment {
 
     // members
-    ProgressBar mProgressBar = null;
+    private ProgressBar mProgressBar = null;
+    private Button mButtonCalibrate = null;
+    private EditText mEditText = null;
 
     // constructor
     public static FragmentCalibration newInstance() {
@@ -19,7 +23,6 @@ public class FragmentCalibration extends Fragment {
     }
 
     // fragment lifecycle
-
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -33,17 +36,33 @@ public class FragmentCalibration extends Fragment {
     }
 
     @Override
-    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+    public void onResume() {
+        super.onResume();
+
         // get reference to main activity
         MainActivity activity = (MainActivity) getActivity();
         if (null == activity) return;
 
-        // setup progress bar
-        mProgressBar = (ProgressBar) view.findViewById(R.id.progressBar_calibration);
-        setProgressBarVisibility(activity.getIsCalibrating());
+        if (null != mProgressBar) {
+            setProgressBarVisibility(activity.getIsCalibrating());
+        }
+        if (null != mButtonCalibrate) {
+            mButtonCalibrate.setOnClickListener(activity);
+        }
+        if (null != mEditText) {
+            mEditText.setText(activity.getCalibrationFolder());
+            mEditText.setOnEditorActionListener(activity);
+        }
+    }
 
-        // tell main activity to start listening to the "start calibration" button
-        view.findViewById(R.id.btn_start_calibration).setOnClickListener(activity);
+    @Override
+    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        // setup widgets
+        mProgressBar = (ProgressBar) view.findViewById(R.id.progressBar_calibration);
+        mButtonCalibrate = (Button) view.findViewById(R.id.btn_start_calibration);
+        mEditText = (EditText) view.findViewById(R.id.editText_calibration_folder);
     }
 
     // widgets

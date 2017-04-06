@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:tools="http://schemas.android.com/tools"
     android:orientation="vertical"
     android:weightSum="1"
     tools:context=".MainActivity" >
@@ -18,11 +18,13 @@
         />
 
     <EditText
+        android:id="@+id/editText_calibration_folder"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:inputType="textMultiLine"
+        android:inputType="textUri"
+        android:imeOptions="actionDone"
         android:layout_marginStart="@dimen/spacing_medium"
-        android:text="@string/default_front_calibration_location"
+        android:hint="@string/hint_calibration_folder"
         />
 
     <FrameLayout
@@ -44,34 +46,8 @@
         android:id="@+id/btn_start_calibration"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="@dimen/spacing_large"
         android:padding="@dimen/spacing_xlarge"
-        android:text="@string/btn_calibrate"
-        />
+        android:layout_margin="@dimen/spacing_medium"
+        android:text="@string/btn_calibrate" />
 
 </LinearLayout>
-
-    <!--<?xml version="1.0" encoding="utf-8"?>-->
-<!--<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"-->
-<!--xmlns:tools="http://schemas.android.com/tools"-->
-<!--android:orientation="vertical"-->
-<!--android:layout_width="match_parent"-->
-<!--android:layout_height="match_parent"-->
-<!--android:padding="4dp"-->
-<!--tools:context="com.emp.cammo.FragmentMainMenu" >-->
-
-<!--<Button-->
-    <!--android:id="@+id/goto_calibration"-->
-    <!--android:layout_width="match_parent"-->
-    <!--android:layout_height="wrap_content"-->
-    <!--android:text="@string/btn_calibrate"-->
-    <!--android:layout_weight="1" />-->
-
-<!--<Button-->
-    <!--android:id="@+id/goto_tracking"-->
-    <!--android:layout_width="match_parent"-->
-    <!--android:layout_height="wrap_content"-->
-    <!--android:text="@string/btn_tracking"-->
-    <!--android:layout_weight="1" />-->
-
-<!--</LinearLayout>-->

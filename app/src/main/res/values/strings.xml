@@ -1,7 +1,8 @@
 <resources>
     <string name="app_name">Cammo</string>
     <string name="btn_calibrate">Calibrate</string>
-    <string name="btn_tracking">track</string>
+    <string name="btn_tracking">start tracking</string>
     <string name="prompt_calibration">calibration images:</string>
     <string name="default_front_calibration_location">/storage/extSdCard/Images/front-calibration</string>
+    <string name="hint_calibration_folder">type directory of calibration pictures.</string>
 </resources>
