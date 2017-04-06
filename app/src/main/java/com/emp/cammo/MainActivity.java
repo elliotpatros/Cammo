@@ -8,9 +8,30 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
 import android.view.View;
 
+import org.opencv.android.BaseLoaderCallback;
+import org.opencv.android.LoaderCallbackInterface;
+import org.opencv.android.OpenCVLoader;
+
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     public final static String TAG = "MAIN_ACTIVITY";
     private FragmentId mCurrentFragmentId;
+
+    // opencv loader
+    private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
+        @Override
+        public void onManagerConnected(int status) {
+            switch (status) {
+                case LoaderCallbackInterface.SUCCESS:
+//                    if (_cameraView != null)
+//                        _cameraView.initialize();
+//                    updateCameraButtonText();
+                    break;
+                default:
+                    super.onManagerConnected(status);
+                    break;
+            }
+        }
+    };
 
     // activity lifecycle
     @Override
@@ -29,6 +50,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (savedInstanceState.containsKey(FragmentId.TAG)) {
             setChildFragment(FragmentId.valueOf(savedInstanceState.getString(FragmentId.TAG)));
         }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // initialize opencv asynchronously
+        OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_2_0, getApplicationContext(), mLoaderCallback);
     }
 
     @Override

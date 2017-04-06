@@ -3,6 +3,7 @@ package com.emp.cammo;
 import android.app.Activity;
 import android.app.Fragment;
 import android.content.Context;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -16,6 +17,25 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import org.opencv.core.Mat;
+import org.opencv.core.MatOfPoint2f;
+import org.opencv.core.MatOfPoint3f;
+import org.opencv.core.Size;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.opencv.calib3d.Calib3d.CALIB_CB_ADAPTIVE_THRESH;
+import static org.opencv.calib3d.Calib3d.CALIB_CB_FILTER_QUADS;
+import static org.opencv.calib3d.Calib3d.CALIB_CB_NORMALIZE_IMAGE;
+import static org.opencv.calib3d.Calib3d.calibrateCamera;
+import static org.opencv.calib3d.Calib3d.findChessboardCorners;
+import static org.opencv.core.CvType.CV_32FC1;
+import static org.opencv.imgcodecs.Imgcodecs.imread;
+import static org.opencv.imgproc.Imgproc.cvtColor;
 
 public class FragmentCalibration extends Fragment implements View.OnClickListener, TextView.OnEditorActionListener {
     // tag
@@ -31,6 +51,7 @@ public class FragmentCalibration extends Fragment implements View.OnClickListene
     // calibration state
     private boolean mIsCalibrating;
     private String mCalibrationFolder;
+    private CameraCalibrator mCalibrator;
 
     // constructor
     public static FragmentCalibration newInstance() {
@@ -64,17 +85,19 @@ public class FragmentCalibration extends Fragment implements View.OnClickListene
         super.onResume();
 
         // set widgets
-        if (null != mProgressBar) {
+        try {
+            // progress bar
             setIsCalibrating(mIsInitialized && mIsCalibrating);
-        }
-        if (null != mButtonCalibrate) {
+            // button
             mButtonCalibrate.setOnClickListener(this);
-        }
-        if (null != mEditText) {
-            mEditText.setOnEditorActionListener(this);
+            // edit text
             setCalibrationFolder(mIsInitialized ? mCalibrationFolder : mDefaultFolder);
+            mEditText.setOnEditorActionListener(this);
+        } catch (NullPointerException e) {
+            e.printStackTrace();
         }
 
+        // done
         mIsInitialized = true;
         setRetainInstance(true);
     }
@@ -84,8 +107,7 @@ public class FragmentCalibration extends Fragment implements View.OnClickListene
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.btn_start_calibration:
-                Log.i(TAG, "onClick: START CALIBRATION");
-                setIsCalibrating(true);
+                startCalibration();
                 break;
             default: break;
         }
@@ -106,22 +128,22 @@ public class FragmentCalibration extends Fragment implements View.OnClickListene
         }
     }
 
-    public boolean getIsCalibrating() {return mIsCalibrating; }
-    private void setIsCalibrating(boolean isCalibrating) {
-        mIsCalibrating = isCalibrating;
-        updateProgressBarVisibility();
-    }
-
     private void updateProgressBarVisibility() {
         if (null == mProgressBar) return;
         mProgressBar.setVisibility(mIsCalibrating ? View.VISIBLE : View.GONE);
     }
 
     private void setCalibrationFolder(String text) {
+        // todo: semaphore
         mCalibrationFolder = text;
         if (!mEditText.getText().toString().equals(mCalibrationFolder)) {
             mEditText.setText(mCalibrationFolder);
         }
+    }
+
+    private String getCalibrationFolder() {
+        // todo: semaphore
+        return mCalibrationFolder;
     }
 
     @Override
@@ -137,4 +159,127 @@ public class FragmentCalibration extends Fragment implements View.OnClickListene
 
         return false;
     }
+
+    // calibration
+    private void startCalibration() {
+        mCalibrator = new CameraCalibrator();
+        mCalibrator.execute();
+    }
+
+    public boolean getIsCalibrating() {return mIsCalibrating; }
+    public void setIsCalibrating(boolean isCalibrating) {
+        mIsCalibrating = isCalibrating;
+        updateProgressBarVisibility();
+    }
+
+    private class CameraCalibrator extends AsyncTask<Void, Void, String> {
+        private static final String TAG = "CameraCalibrator";
+        private Mat image;
+
+        // todo: fix this lazy shit
+        private final Size chessboardSize = new Size(9, 6);
+        private final int squareSize = 8;
+        private final int findCheckerboardFlags =
+                CALIB_CB_ADAPTIVE_THRESH + CALIB_CB_FILTER_QUADS + CALIB_CB_NORMALIZE_IMAGE;
+
+        // calibration stuff
+        ArrayList<Mat> objectPoints = new ArrayList<>();
+        ArrayList<Mat> imagePoints  = new ArrayList<>();
+
+        // camera stuff
+        Mat intrinsic = new Mat();
+        Mat distCoefs = new Mat();
+        ArrayList<Mat> rvecs = new ArrayList<>();
+        ArrayList<Mat> tvecs = new ArrayList<>();
+
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            setIsCalibrating(true);
+        }
+
+        @Override
+        protected void onPostExecute(String message) {
+            super.onPostExecute(message);
+            setIsCalibrating(false);
+            Toast.makeText(getActivity(), message, Toast.LENGTH_LONG).show();
+        }
+
+        @Override
+        protected String doInBackground(Void... params) {
+            // setup object points
+            setupConstants();
+
+            // find images
+            List<String> imagePaths = getImagesInFolder();
+
+            // process images
+            processImages(imagePaths);
+
+            return "woo hoo finished!";
+        }
+
+        // private functions
+        private void setupConstants() { // todo: fix laziness
+            // aspect ratio todo: check that this isn't wrong
+            intrinsic = new Mat(3, 3, CV_32FC1);
+            intrinsic.put(0, 0, 1);
+            intrinsic.put(1, 1, 1);
+        }
+
+        private List<String> getImagesInFolder() {
+            // open picture directory
+            File directory = new File(getCalibrationFolder());
+            File[] files = directory.listFiles();
+
+            // setup path list
+            ArrayList<String> images = new ArrayList<>(files.length);
+            for (File file : files) {images.add(file.getAbsolutePath()); }
+
+            return images;
+        }
+
+        private void processImages(List<String> imagePaths) {
+            MatOfPoint2f corners = new MatOfPoint2f();
+
+            for (int i = 0; i < imagePaths.size(); i++) { //String imagePath : imagePaths) {
+                // get this image path
+                final String imagePath = imagePaths.get(i);
+
+                // find chessboards
+                image = imread(imagePath, 0 /* return gray image */);
+                boolean foundCorners = findChessboardCorners(image, chessboardSize, corners, findCheckerboardFlags);
+                if (foundCorners) {imagePoints.add(corners); }
+
+                // report object points (world points in matlab)
+                appendObjectPoint();
+            }
+
+            // todo: start here!
+            calibrateCamera(objectPoints, imagePoints, image.size(), intrinsic, distCoefs, rvecs, tvecs);
+        }
+
+        private void appendObjectPoint() {
+            // todo this is fucked...
+            final long nRows = (long)chessboardSize.height;
+            final long nCols = (long)chessboardSize.width;
+            Mat temp = new Mat();
+
+            for (int row = 0; row < nRows; row++) {
+                for (int col = 0; col < nCols; col++) {
+                    double[] point = {col * squareSize, row * squareSize, 0};
+                    temp.put(row, col, point);
+                }
+            }
+
+            objectPoints.add(temp);
+        }
+    }
+
+//    interface CalibrationCallbacks {
+//        void onPreExecute();
+//        void onCancelled();
+//        void onPostExecute();
+//    }
 }
