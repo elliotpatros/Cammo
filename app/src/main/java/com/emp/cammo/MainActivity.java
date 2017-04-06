@@ -10,7 +10,9 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.TextView;
 
 public class MainActivity extends AppCompatActivity implements
@@ -130,15 +132,22 @@ public class MainActivity extends AppCompatActivity implements
     public String getCalibrationFolder() {return mCalibrationFolder; }
     public void setCalibrationFolder(String msg) {mCalibrationFolder = msg; }
 
+    public void hideKeyboard(View view) {
+        InputMethodManager imm = (InputMethodManager)getSystemService(INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        findViewById(R.id.activity_main_layout).requestFocus();
+    }
+
     // fragment management
     private boolean onMainMenu() {
         return FragmentMainMenu.class == mChildFragment.getClass();
     }
 
     @Override
-    public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+    public boolean onEditorAction(TextView view, int actionId, KeyEvent event) {
         if (EditorInfo.IME_ACTION_DONE == actionId) {
-            setCalibrationFolder(v.getText().toString());
+            setCalibrationFolder(view.getText().toString());
+            hideKeyboard(view);
             return true;
         }
 
