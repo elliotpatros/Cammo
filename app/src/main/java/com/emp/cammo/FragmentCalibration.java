@@ -6,7 +6,6 @@ import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,23 +16,16 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import org.opencv.core.Mat;
-import org.opencv.core.MatOfPoint2f;
-import org.opencv.core.MatOfPoint3f;
 import org.opencv.core.Size;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.opencv.calib3d.Calib3d.CALIB_CB_ADAPTIVE_THRESH;
-import static org.opencv.calib3d.Calib3d.CALIB_CB_FILTER_QUADS;
-import static org.opencv.calib3d.Calib3d.CALIB_CB_NORMALIZE_IMAGE;
 import static org.opencv.calib3d.Calib3d.calibrateCamera;
 import static org.opencv.calib3d.Calib3d.findChessboardCorners;
-import static org.opencv.core.CvType.CV_32FC1;
 import static org.opencv.imgcodecs.Imgcodecs.imread;
 import static org.opencv.imgproc.Imgproc.cvtColor;
 
@@ -109,7 +101,8 @@ public class FragmentCalibration extends Fragment implements View.OnClickListene
             case R.id.btn_start_calibration:
                 startCalibration();
                 break;
-            default: break;
+            default:
+                break;
         }
     }
 
@@ -166,120 +159,218 @@ public class FragmentCalibration extends Fragment implements View.OnClickListene
         mCalibrator.execute();
     }
 
-    public boolean getIsCalibrating() {return mIsCalibrating; }
+    public boolean getIsCalibrating() {
+        return mIsCalibrating;
+    }
+
     public void setIsCalibrating(boolean isCalibrating) {
         mIsCalibrating = isCalibrating;
         updateProgressBarVisibility();
     }
 
     private class CameraCalibrator extends AsyncTask<Void, Void, String> {
-        private static final String TAG = "CameraCalibrator";
-        private Mat image;
-
-        // todo: fix this lazy shit
-        private final Size chessboardSize = new Size(9, 6);
-        private final int squareSize = 8;
-        private final int findCheckerboardFlags =
-                CALIB_CB_ADAPTIVE_THRESH + CALIB_CB_FILTER_QUADS + CALIB_CB_NORMALIZE_IMAGE;
-
-        // calibration stuff
-        ArrayList<Mat> objectPoints = new ArrayList<>();
-        ArrayList<Mat> imagePoints  = new ArrayList<>();
-
-        // camera stuff
-        Mat intrinsic = new Mat();
-        Mat distCoefs = new Mat();
-        ArrayList<Mat> rvecs = new ArrayList<>();
-        ArrayList<Mat> tvecs = new ArrayList<>();
-
+        CalibrationRoutine mRoutine;
 
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
             setIsCalibrating(true);
+            mRoutine = null;
         }
 
         @Override
-        protected void onPostExecute(String message) {
-            super.onPostExecute(message);
+        protected void onPostExecute(String s) {
+            super.onPostExecute(s);
             setIsCalibrating(false);
-            Toast.makeText(getActivity(), message, Toast.LENGTH_LONG).show();
         }
 
         @Override
         protected String doInBackground(Void... params) {
-            // setup object points
-            setupConstants();
+            List<String> imagePaths = getImagePaths();
+            String imagePath = imagePaths.get(0);
+            Size imageSize = getImageSize(imagePath);
+            mRoutine = new CalibrationRoutine(imageSize);
 
-            // find images
-            List<String> imagePaths = getImagesInFolder();
+            for (int i = 0; i < imagePaths.size(); i++) {
+                imagePath = imagePaths.get(i);
+                Mat image = imread(imagePath, 0);
+                mRoutine.processFrame(image);
+                mRoutine.addCorners();
+            }
 
-            // process images
-            processImages(imagePaths);
+            mRoutine.calibrate();
 
-            return "woo hoo finished!";
+            return null;
         }
 
-        // private functions
-        private void setupConstants() { // todo: fix laziness
-            // aspect ratio todo: check that this isn't wrong
-            intrinsic = new Mat(3, 3, CV_32FC1);
-            intrinsic.put(0, 0, 1);
-            intrinsic.put(1, 1, 1);
-        }
+        //        private void processImages(List<String> imagePaths) {
+//            MatOfPoint2f corners = new MatOfPoint2f();
+//
+//            for (int i = 0; i < imagePaths.size(); i++) { //String imagePath : imagePaths) {
+//                // get this image path
+//                final String imagePath = imagePaths.get(i);
+//
+//                // find chessboards
+//                image = imread(imagePath, 0 /* return gray image */);
+//                boolean foundCorners = findChessboardCorners(image, chessboardSize, corners, findCheckerboardFlags);
+//                if (foundCorners) {
+//                    imagePoints.add(corners);
+//                }
+//
+//                // report object points (world points in matlab)
+//                objectPoints.add(objectPoint.clone());
+//
+//                // todo: start here!
+//                calibrateCamera(objectPoints, imagePoints, image.size(), intrinsic, distCoefs, rvecs, tvecs);
+//            }
 
-        private List<String> getImagesInFolder() {
+        private List<String> getImagePaths() {
             // open picture directory
             File directory = new File(getCalibrationFolder());
             File[] files = directory.listFiles();
 
             // setup path list
             ArrayList<String> images = new ArrayList<>(files.length);
-            for (File file : files) {images.add(file.getAbsolutePath()); }
+            for (File file : files) {
+                images.add(file.getAbsolutePath());
+            }
 
             return images;
         }
 
-        private void processImages(List<String> imagePaths) {
-            MatOfPoint2f corners = new MatOfPoint2f();
-
-            for (int i = 0; i < imagePaths.size(); i++) { //String imagePath : imagePaths) {
-                // get this image path
-                final String imagePath = imagePaths.get(i);
-
-                // find chessboards
-                image = imread(imagePath, 0 /* return gray image */);
-                boolean foundCorners = findChessboardCorners(image, chessboardSize, corners, findCheckerboardFlags);
-                if (foundCorners) {imagePoints.add(corners); }
-
-                // report object points (world points in matlab)
-                appendObjectPoint();
-            }
-
-            // todo: start here!
-            calibrateCamera(objectPoints, imagePoints, image.size(), intrinsic, distCoefs, rvecs, tvecs);
-        }
-
-        private void appendObjectPoint() {
-            // todo this is fucked...
-            final long nRows = (long)chessboardSize.height;
-            final long nCols = (long)chessboardSize.width;
-            Mat temp = new Mat();
-
-            for (int row = 0; row < nRows; row++) {
-                for (int col = 0; col < nCols; col++) {
-                    double[] point = {col * squareSize, row * squareSize, 0};
-                    temp.put(row, col, point);
-                }
-            }
-
-            objectPoints.add(temp);
+        private Size getImageSize(String imagePath) {
+            Mat image = imread(imagePath, 0 /* return gray image */);
+            return image.size();
         }
     }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+//    private class CameraCalibrator extends AsyncTask<Void, Void, String> {
+//        private static final String TAG = "CameraCalibrator";
+//        private Mat image;
+//
+//        // todo: fix this lazy shit
+////        private Mat objectPoint;
+////        private final Size chessboardSize = new Size(9, 6);
+////        private final int squareSize = 8;
+//        private final int findCheckerboardFlags =
+//                CALIB_CB_ADAPTIVE_THRESH + CALIB_CB_FILTER_QUADS + CALIB_CB_NORMALIZE_IMAGE;
+//
+//        // calibration stuff
+//        ArrayList<Mat> objectPoints = new ArrayList<>();
+//        ArrayList<Mat> imagePoints = new ArrayList<>();
+//
+//        // camera stuff
+//        Mat intrinsic = new Mat();
+//        Mat distCoefs = new Mat();
+//        ArrayList<Mat> rvecs = new ArrayList<>();
+//        ArrayList<Mat> tvecs = new ArrayList<>();
+//
+//
+//        @Override
+//        protected void onPreExecute() {
+//            super.onPreExecute();
+//            setIsCalibrating(true);
+//        }
+//
+//        @Override
+//        protected void onPostExecute(String message) {
+//            super.onPostExecute(message);
+//            setIsCalibrating(false);
+//            Toast.makeText(getActivity(), message, Toast.LENGTH_LONG).show();
+//        }
+//
+//        @Override
+//        protected String doInBackground(Void... params) {
+//            // setup object points
+//            setupConstants();
+//
+//            // find images
+//            List<String> imagePaths = getImagesInFolder();
+//
+//            // process images
+//            processImages(imagePaths);
+//
+//            return "woo hoo finished!";
+//        }
+//
+//        // private functions
+//        private void setupConstants() { // todo: fix laziness
+//            // aspect ratio todo: check that this isn't wrong
+//            intrinsic = Mat.eye(3, 3, CV_64F);
+//            // possibly: intrinsic.put(0, 0, aspectRatio)
+//
+//            rvecs.add(new Mat());
+//            tvecs.add(new Mat());
+//
+//            // object point
+//            // todo this is fucked...
+//            final int nRows = (int) chessboardSize.height;
+//            final int nCols = (int) chessboardSize.width;
+//            objectPoint = new Mat(nRows * nCols, 1, CV_64F);
+//
+//            int index = 0;
+//            for (int row = 0; row < nRows; row++) {
+//                for (int col = 0; col < nCols; col++) {
+//                    double[] point = {col * squareSize, row * squareSize, 0};
+//                    objectPoint.put(index++, 1, point);
+//                }
+//            }
+//        }
+//
+//        private List<String> getImagesInFolder() {
+//            // open picture directory
+//            File directory = new File(getCalibrationFolder());
+//            File[] files = directory.listFiles();
+//
+//            // setup path list
+//            ArrayList<String> images = new ArrayList<>(files.length);
+//            for (File file : files) {
+//                images.add(file.getAbsolutePath());
+//            }
+//
+//            return images;
+//        }
+//
+//        private void processImages(List<String> imagePaths) {
+//            MatOfPoint2f corners = new MatOfPoint2f();
+//
+//            for (int i = 0; i < imagePaths.size(); i++) { //String imagePath : imagePaths) {
+//                // get this image path
+//                final String imagePath = imagePaths.get(i);
+//
+//                // find chessboards
+//                image = imread(imagePath, 0 /* return gray image */);
+//                boolean foundCorners = findChessboardCorners(image, chessboardSize, corners, findCheckerboardFlags);
+//                if (foundCorners) {
+//                    imagePoints.add(corners);
+//                }
+//
+//                // report object points (world points in matlab)
+//                objectPoints.add(objectPoint.clone());
+//
+//                // todo: start here!
+//                calibrateCamera(objectPoints, imagePoints, image.size(), intrinsic, distCoefs, rvecs, tvecs);
+//            }
+//        }
+//    }
+//}
 
 //    interface CalibrationCallbacks {
 //        void onPreExecute();
 //        void onCancelled();
 //        void onPostExecute();
 //    }
-}
+//}
