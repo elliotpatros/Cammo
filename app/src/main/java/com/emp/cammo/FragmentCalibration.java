@@ -19,15 +19,13 @@ import android.widget.TextView;
 
 import org.opencv.core.Mat;
 import org.opencv.core.Size;
+import org.opencv.imgcodecs.Imgcodecs;
+import org.w3c.dom.Text;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-
-import static org.opencv.calib3d.Calib3d.calibrateCamera;
-import static org.opencv.calib3d.Calib3d.findChessboardCorners;
-import static org.opencv.imgcodecs.Imgcodecs.imread;
-import static org.opencv.imgproc.Imgproc.cvtColor;
+import java.util.Locale;
 
 public class FragmentCalibration extends Fragment implements View.OnClickListener, TextView.OnEditorActionListener {
     // tag
@@ -39,6 +37,7 @@ public class FragmentCalibration extends Fragment implements View.OnClickListene
     private ProgressBar mProgressBar = null;
     private Button mButtonCalibrate = null;
     private EditText mEditText = null;
+    private TextView mTextView = null;
 
     // calibration state
     private boolean mIsCalibrating;
@@ -70,6 +69,7 @@ public class FragmentCalibration extends Fragment implements View.OnClickListene
         mProgressBar = (ProgressBar) view.findViewById(R.id.progressBar_calibration);
         mButtonCalibrate = (Button) view.findViewById(R.id.btn_start_calibration);
         mEditText = (EditText) view.findViewById(R.id.editText_calibration_folder);
+        mTextView = (TextView) view.findViewById(R.id.textView_calibration);
     }
 
     @Override
@@ -155,8 +155,10 @@ public class FragmentCalibration extends Fragment implements View.OnClickListene
 
     // calibration
     private void startCalibration() {
-        mCalibrator = new CameraCalibrator();
-        mCalibrator.execute();
+        if (!getIsCalibrating()) {
+            mCalibrator = new CameraCalibrator();
+            mCalibrator.execute();
+        }
     }
 
     public boolean getIsCalibrating() {
@@ -168,7 +170,7 @@ public class FragmentCalibration extends Fragment implements View.OnClickListene
         updateProgressBarVisibility();
     }
 
-    private class CameraCalibrator extends AsyncTask<Void, Void, String> {
+    private class CameraCalibrator extends AsyncTask<Void, String, String> {
         CalibrationRoutine mRoutine;
 
         @Override
@@ -179,50 +181,38 @@ public class FragmentCalibration extends Fragment implements View.OnClickListene
         }
 
         @Override
+        protected void onProgressUpdate(String... values) {
+            super.onProgressUpdate(values);
+            mTextView.setText(values[0]);
+        }
+
+        @Override
         protected void onPostExecute(String s) {
             super.onPostExecute(s);
             setIsCalibrating(false);
+            mTextView.setText("finished!");
         }
 
         @Override
         protected String doInBackground(Void... params) {
+            publishProgress("starting...");
             List<String> imagePaths = getImagePaths();
             String imagePath = imagePaths.get(0);
             Size imageSize = getImageSize(imagePath);
             mRoutine = new CalibrationRoutine(imageSize);
 
             for (int i = 0; i < imagePaths.size(); i++) {
+                publishProgress(String.format(Locale.ENGLISH, "processing image %d of %d", i+1, imagePaths.size()));
                 imagePath = imagePaths.get(i);
-                Mat image = imread(imagePath, 0);
+                Mat image = Imgcodecs.imread(imagePath, Imgcodecs.CV_LOAD_IMAGE_GRAYSCALE);
                 mRoutine.processFrame(image);
-                mRoutine.addCorners();
             }
 
+            publishProgress("calibrating...");
             mRoutine.calibrate();
 
             return null;
         }
-
-        //        private void processImages(List<String> imagePaths) {
-//            MatOfPoint2f corners = new MatOfPoint2f();
-//
-//            for (int i = 0; i < imagePaths.size(); i++) { //String imagePath : imagePaths) {
-//                // get this image path
-//                final String imagePath = imagePaths.get(i);
-//
-//                // find chessboards
-//                image = imread(imagePath, 0 /* return gray image */);
-//                boolean foundCorners = findChessboardCorners(image, chessboardSize, corners, findCheckerboardFlags);
-//                if (foundCorners) {
-//                    imagePoints.add(corners);
-//                }
-//
-//                // report object points (world points in matlab)
-//                objectPoints.add(objectPoint.clone());
-//
-//                // todo: start here!
-//                calibrateCamera(objectPoints, imagePoints, image.size(), intrinsic, distCoefs, rvecs, tvecs);
-//            }
 
         private List<String> getImagePaths() {
             // open picture directory
@@ -239,7 +229,7 @@ public class FragmentCalibration extends Fragment implements View.OnClickListene
         }
 
         private Size getImageSize(String imagePath) {
-            Mat image = imread(imagePath, 0 /* return gray image */);
+            Mat image = Imgcodecs.imread(imagePath, Imgcodecs.CV_LOAD_IMAGE_GRAYSCALE);
             return image.size();
         }
     }
