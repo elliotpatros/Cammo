@@ -35,11 +35,14 @@ public class CalibrationRoutine {
         mFlags = Calib3d.CALIB_FIX_PRINCIPAL_POINT + // todo: check all of these flags
                 Calib3d.CALIB_ZERO_TANGENT_DIST +
                 Calib3d.CALIB_FIX_ASPECT_RATIO +
+                Calib3d.CALIB_FIX_INTRINSIC +
                 Calib3d.CALIB_USE_INTRINSIC_GUESS + // todo: not sure if this is a good idea
+                Calib3d.CALIB_FIX_FOCAL_LENGTH +
                 Calib3d.CALIB_FIX_K4 +
-                Calib3d.CALIB_FIX_K5;
+                Calib3d.CALIB_FIX_K5
+        ;
         Mat.eye(3, 3, CvType.CV_64FC1).copyTo(mCameraMatrix);
-//        mCameraMatrix.put(0, 0, 1.0);
+        mCameraMatrix.put(0, 0, mImageSize.width / mImageSize.height);
         Mat.zeros(5, 1, CvType.CV_64FC1).copyTo(mDistortionCoefficients);
         Log.i(TAG, "Instantiated new " + this.getClass());
     }
@@ -83,6 +86,14 @@ public class CalibrationRoutine {
         Log.i(TAG, String.format("Average re-projection error: %f", mRms));
         Log.i(TAG, "Camera matrix: " + mCameraMatrix.dump());
         Log.i(TAG, "Distortion coefficients: " + mDistortionCoefficients.dump());
+    }
+
+    public Mat getCameraMatrix() {
+        return mCameraMatrix;
+    }
+
+    public Mat getDistortionCoefficients() {
+        return mDistortionCoefficients;
     }
 
     public void clearCorners() {

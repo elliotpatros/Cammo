@@ -17,10 +17,11 @@ import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import org.opencv.calib3d.Calib3d;
 import org.opencv.core.Mat;
 import org.opencv.core.Size;
 import org.opencv.imgcodecs.Imgcodecs;
-import org.w3c.dom.Text;
+import org.opencv.imgproc.Imgproc;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -210,6 +211,17 @@ public class FragmentCalibration extends Fragment implements View.OnClickListene
 
             publishProgress("calibrating...");
             mRoutine.calibrate();
+
+
+            /* write test images to disk */
+            publishProgress("writing image to disk...");
+            Calib3d.getOptimalNewCameraMatrix(mRoutine.getCameraMatrix(), mRoutine.getDistortionCoefficients(), imageSize, 0);
+            Mat testin = Imgcodecs.imread(imagePath, Imgcodecs.CV_LOAD_IMAGE_GRAYSCALE);
+            Mat testout = new Mat();
+            Imgproc.undistort(testin, testout, mRoutine.getCameraMatrix(), mRoutine.getDistortionCoefficients());
+//            String fileout = imagePath.replace(".jpg", "-test.png");
+            Imgcodecs.imwrite("/storage/emulated/0/Download/test.png", testout);
+
 
             return null;
         }
