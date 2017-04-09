@@ -1,53 +1,63 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/background_fragment_calibration"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:weightSum="1"
+    android:focusable="true"
+    android:focusableInTouchMode="true"
     tools:context=".MainActivity" >
-
+    
     <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/prompt_calibration"
-        android:layout_marginStart="@dimen/spacing_medium"
-        android:layout_marginTop="@dimen/spacing_medium"
-        android:textSize="@dimen/text_medium"
-        android:textColor="?android:attr/textColorSecondary"
-        />
-
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="@string/prompt_calibration"
+    android:layout_marginStart="@dimen/spacing_medium"
+    android:layout_marginTop="@dimen/spacing_medium"
+    android:textSize="@dimen/text_medium"
+    android:textColor="?android:attr/textColorSecondary"
+    />
+    
     <EditText
-        android:id="@+id/editText_calibration_folder"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:inputType="textUri"
-        android:imeOptions="actionDone"
-        android:layout_marginStart="@dimen/spacing_medium"
-        android:hint="@string/hint_calibration_folder"
-        />
-
+    android:id="@+id/editText_calibration_folder"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:inputType="textUri"
+    android:imeOptions="actionDone"
+    android:layout_marginStart="@dimen/spacing_medium"
+    android:hint="@string/hint_calibration_folder"
+    />
+    
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1" >
-
+        
         <ProgressBar
-            android:id="@+id/progressBar_calibration"
-            style="?android:attr/progressBarStyle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:visibility="gone" />
-
-    </FrameLayout>
-
-    <Button
-        android:id="@+id/btn_start_calibration"
+        android:id="@+id/progressBar_calibration"
+        style="?android:attr/progressBarStyle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="@dimen/spacing_xlarge"
-        android:layout_margin="@dimen/spacing_medium"
-        android:text="@string/btn_calibrate" />
-
+        android:layout_gravity="center"
+        android:visibility="gone" />
+        
+        <TextView
+        android:id="@+id/textView_calibration"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:text="press 'calibrate' to start" />
+        
+    </FrameLayout>
+    
+    <Button
+    android:id="@+id/btn_start_calibration"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="@dimen/spacing_xlarge"
+    android:layout_margin="@dimen/spacing_medium"
+    android:text="@string/btn_calibrate" />
+    
 </LinearLayout>
