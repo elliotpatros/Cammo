@@ -191,7 +191,7 @@ public class FragmentCalibration extends Fragment implements View.OnClickListene
         protected void onPostExecute(String s) {
             super.onPostExecute(s);
             setIsCalibrating(false);
-            mTextView.setText("finished!");
+            mTextView.setText("finished.");
         }
 
         @Override
@@ -200,34 +200,29 @@ public class FragmentCalibration extends Fragment implements View.OnClickListene
 
             // get image path
             List<String> imagePaths = getImagePaths();
-            String imagePath = imagePaths.get(0);
-
-            // get size of images (pixels width x height)
-            Size imageSize = getImageSize(imagePath);
-
             // make a new calibration routine
-            mRoutine = new CalibrationRoutine(imageSize);
+            mRoutine = new CalibrationRoutine(getImageSize(imagePaths.get(0)));
 
             // find checkerboard points in each image
             for (int i = 0; i < imagePaths.size(); i++) {
-                publishProgress(String.format(Locale.ENGLISH, "processing image %d of %d", i+1, imagePaths.size()));
-                imagePath = imagePaths.get(i);
+                publishProgress(String.format(Locale.US, "processing image %d of %d", i+1, imagePaths.size()));
+                String imagePath = imagePaths.get(i);
                 Mat image = Imgcodecs.imread(imagePath, Imgcodecs.CV_LOAD_IMAGE_GRAYSCALE);
                 mRoutine.processFrame(image);
             }
 
             publishProgress("calibrating...");
             mRoutine.calibrate();
-            
-            
-            /* write test images to disk */
-            publishProgress("writing image to disk...");
-            Calib3d.getOptimalNewCameraMatrix(mRoutine.getCameraMatrix(), mRoutine.getDistortionCoefficients(), imageSize, 0);
-            Mat testin = Imgcodecs.imread(imagePath, Imgcodecs.CV_LOAD_IMAGE_GRAYSCALE);
-            Mat testout = new Mat();
-            Imgproc.undistort(testin, testout, mRoutine.getCameraMatrix(), mRoutine.getDistortionCoefficients());
-            Imgcodecs.imwrite("/storage/emulated/0/Download/test.png", testout);
 
+
+            /* write test images to disk */
+            for (int i = 0; i < imagePaths.size(); i++) {
+                publishProgress(String.format(Locale.US, "writing image %d of %d", i+1, imagePaths.size()));
+                Mat distorted = Imgcodecs.imread(imagePaths.get(i), Imgcodecs.CV_LOAD_IMAGE_GRAYSCALE);
+                Mat undistorted = distorted.clone();
+                Imgproc.undistort(distorted, undistorted, mRoutine.getCameraMatrix(), mRoutine.getDistortionCoefficients());
+                Imgcodecs.imwrite(String.format(Locale.US, "/storage/emulated/0/Download/undistorted-%d.png", i), undistorted);
+            }
 
             return null;
         }
