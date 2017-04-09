@@ -32,19 +32,18 @@ public class CalibrationRoutine {
 
     public CalibrationRoutine(Size imageSize) {
         mImageSize = imageSize;
-        mFlags = Calib3d.CALIB_FIX_PRINCIPAL_POINT + // todo: check all of these flags
-                Calib3d.CALIB_ZERO_TANGENT_DIST +
+        mFlags =
+                Calib3d.CALIB_USE_INTRINSIC_GUESS +
                 Calib3d.CALIB_FIX_ASPECT_RATIO +
-                Calib3d.CALIB_FIX_INTRINSIC +
-                Calib3d.CALIB_USE_INTRINSIC_GUESS + // todo: not sure if this is a good idea
-                Calib3d.CALIB_FIX_FOCAL_LENGTH +
+                Calib3d.CALIB_ZERO_TANGENT_DIST +
+                Calib3d.CALIB_SAME_FOCAL_LENGTH +
                 Calib3d.CALIB_FIX_K4 +
                 Calib3d.CALIB_FIX_K5
         ;
         Mat.eye(3, 3, CvType.CV_64FC1).copyTo(mCameraMatrix);
         mCameraMatrix.put(0, 0, mImageSize.width / mImageSize.height);
+//        mCameraMatrix.put(1, 1, mImageSize.height / mImageSize.width);
         Mat.zeros(5, 1, CvType.CV_64FC1).copyTo(mDistortionCoefficients);
-        Log.i(TAG, "Instantiated new " + this.getClass());
     }
 
     public void processFrame(Mat grayFrame) {
@@ -69,7 +68,7 @@ public class CalibrationRoutine {
 
 //        mCameraMatrix = Calib3d.initCameraMatrix2D(mCorners, mCornersBuffer, mImageSize);
 
-        Calib3d.calibrateCamera(objectPoints,
+        double rms = Calib3d.calibrateCamera(objectPoints,
                 mCornersBuffer,
                 mImageSize,
                 mCameraMatrix,
@@ -78,7 +77,9 @@ public class CalibrationRoutine {
                 tvecs,
                 mFlags);
 
-        Calib3d.getOptimalNewCameraMatrix(mCameraMatrix, mDistortionCoefficients, mImageSize, 0.);
+        Log.i(TAG, "calibrate: rms = " + rms);
+
+//        Calib3d.getOptimalNewCameraMatrix(mCameraMatrix, mDistortionCoefficients, mImageSize, 1.);
 
         mIsCalibrated = Core.checkRange(mCameraMatrix) && Core.checkRange(mDistortionCoefficients);
 
@@ -94,10 +95,6 @@ public class CalibrationRoutine {
 
     public Mat getDistortionCoefficients() {
         return mDistortionCoefficients;
-    }
-
-    public void clearCorners() {
-        mCornersBuffer.clear();
     }
 
     private void calcBoardCornerPositions(Mat corners) {
