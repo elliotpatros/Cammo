@@ -6,6 +6,7 @@ import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,7 +18,6 @@ import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import org.opencv.calib3d.Calib3d;
 import org.opencv.core.Mat;
 import org.opencv.core.Size;
 import org.opencv.imgcodecs.Imgcodecs;
@@ -44,6 +44,7 @@ public class FragmentCalibration extends Fragment implements View.OnClickListene
     private boolean mIsCalibrating;
     private String mCalibrationFolder;
     private CameraCalibrator mCalibrator;
+    private MainActivity mParent;
 
     // constructor
     public static FragmentCalibration newInstance() {
@@ -76,6 +77,9 @@ public class FragmentCalibration extends Fragment implements View.OnClickListene
     @Override
     public void onResume() {
         super.onResume();
+
+        // get camera parameters
+        mParent = (MainActivity) getActivity();
 
         // set widgets
         try {
@@ -190,8 +194,10 @@ public class FragmentCalibration extends Fragment implements View.OnClickListene
         @Override
         protected void onPostExecute(String s) {
             super.onPostExecute(s);
+            mParent.mCameraParameters = mRoutine.getCameraParameters();
             setIsCalibrating(false);
             mTextView.setText("finished.");
+            Log.i(TAG, "onPostExecute: " + mParent.mCameraParameters.toString());
         }
 
         @Override
@@ -200,6 +206,7 @@ public class FragmentCalibration extends Fragment implements View.OnClickListene
 
             // get image path
             List<String> imagePaths = getImagePaths();
+
             // make a new calibration routine
             mRoutine = new CalibrationRoutine(getImageSize(imagePaths.get(0)));
 
@@ -215,12 +222,13 @@ public class FragmentCalibration extends Fragment implements View.OnClickListene
             mRoutine.calibrate();
 
 
-            /* write test images to disk */
+            /* write test images to disk */ // deleteme!
+            CameraParameters parameters = mRoutine.getCameraParameters();
             for (int i = 0; i < imagePaths.size(); i++) {
                 publishProgress(String.format(Locale.US, "writing image %d of %d", i+1, imagePaths.size()));
                 Mat distorted = Imgcodecs.imread(imagePaths.get(i), Imgcodecs.CV_LOAD_IMAGE_GRAYSCALE);
                 Mat undistorted = distorted.clone();
-                Imgproc.undistort(distorted, undistorted, mRoutine.getCameraMatrix(), mRoutine.getDistortionCoefficients());
+                Imgproc.undistort(distorted, undistorted, parameters.getCameraMatrix(), parameters.getDistortion());
                 Imgcodecs.imwrite(String.format(Locale.US, "/storage/emulated/0/Download/undistorted-%d.png", i), undistorted);
             }
 

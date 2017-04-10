@@ -5,6 +5,7 @@ import android.app.FragmentManager;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 
@@ -15,8 +16,8 @@ import org.opencv.android.OpenCVLoader;
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     public final static String TAG = "MAIN_ACTIVITY";
     private FragmentId mCurrentFragmentId;
-
-//    static{ System.loadLibrary("opencv_java3"); }
+    public CameraParameters mCameraParameters;
+    private Bundle mBundle = null;
 
     // opencv loader
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
@@ -24,6 +25,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         public void onManagerConnected(int status) {
             switch (status) {
                 case LoaderCallbackInterface.SUCCESS:
+                    if (null == mCameraParameters) {
+                        mCameraParameters = new CameraParameters(mBundle);
+                    }
                     break;
                 default:
                     super.onManagerConnected(status);
@@ -45,9 +49,26 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             return;
         }
 
-        // restore state
+        // restore fragment id
         if (savedInstanceState.containsKey(FragmentId.TAG)) {
-            setChildFragment(FragmentId.valueOf(savedInstanceState.getString(FragmentId.TAG)));
+            final String name = savedInstanceState.getString(FragmentId.TAG);
+            final FragmentId id = FragmentId.valueOf(name);
+            setChildFragment(id);
+        }
+    }
+
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        // save bundle
+        try {
+            mBundle = null;
+            mCameraParameters = new CameraParameters(savedInstanceState);
+        } catch (UnsatisfiedLinkError e) {
+            Log.i(TAG, "onCreate: opencv isn't available yet");
+            mCameraParameters = null;
+            mBundle = savedInstanceState;
         }
     }
 
@@ -60,8 +81,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         } else {
             mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
         }
-          // initialize opencv asynchronously
-//        OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_2_0, getApplicationContext(), mLoaderCallback);
     }
 
     @Override
@@ -79,6 +98,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onSaveInstanceState(outState);
         if (null == outState) return;
 
+        // save camera parameters
+        mCameraParameters.saveState(outState);
+
+        // save fragment id name
         outState.putString(FragmentId.TAG, mCurrentFragmentId.name);
     }
 
@@ -106,15 +129,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void setChildFragment(FragmentId fragmentId) {
         try {
-// remember the new fragment id
+            // remember the new fragment id
             mCurrentFragmentId = fragmentId;
 
-// try to restore the fragment first, and get a new one if that fails
+            // try to restore the fragment first, and get a new one if that fails
             FragmentManager manager = getFragmentManager();
             Fragment fragment = manager.findFragmentByTag(fragmentId.name);
             if (null == fragment) {fragment = fragmentId.newInstance(); }
 
-// replace old fragment with new one
+            // replace old fragment with new one
             manager.beginTransaction().replace(R.id.activity_main_layout, fragment, fragmentId.name).commit();
             setHomeArrow();
         } catch (NullPointerException e) {

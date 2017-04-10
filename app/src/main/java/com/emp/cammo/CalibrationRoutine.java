@@ -1,7 +1,6 @@
 package com.emp.cammo;
 
 import org.opencv.calib3d.Calib3d;
-import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint2f;
@@ -15,15 +14,14 @@ import java.util.List;
 public class CalibrationRoutine {
     private static final String TAG = "CalibrationRoutine";
 
+    private CameraParameters mCameraParameters;
+
     private final Size mPatternSize = new Size(9, 6); // (cols, rows)
+    private double mSquareSize = 8; // millimeters
     private final int mCornersSize = (int)(mPatternSize.width * mPatternSize.height);
+
     private MatOfPoint2f mCorners = new MatOfPoint2f();
     private List<Mat> mCornersBuffer = new ArrayList<>();
-    private boolean mIsCalibrated = false;
-
-    private Mat mCameraMatrix = new Mat();
-    private Mat mDistortionCoefficients = new Mat();
-    private double mSquareSize = 8; // millimeters
     private Size mImageSize; // pixels width by pixels height
     private final static int mFlags =
                     Calib3d.CALIB_FIX_ASPECT_RATIO +
@@ -32,10 +30,12 @@ public class CalibrationRoutine {
                     Calib3d.CALIB_FIX_K5;
 
     public CalibrationRoutine(Size imageSize) {
+        mCameraParameters = new CameraParameters();
         mImageSize = imageSize;
+    }
 
-        Mat.eye(3, 3, CvType.CV_64FC1).copyTo(mCameraMatrix);
-        Mat.zeros(8, 1, CvType.CV_64FC1).copyTo(mDistortionCoefficients);
+    public CameraParameters getCameraParameters() {
+        return mCameraParameters;
     }
 
     public void processFrame(Mat grayFrame) {
@@ -68,21 +68,13 @@ public class CalibrationRoutine {
         Calib3d.calibrateCamera(objectPoints,
                 mCornersBuffer,
                 mImageSize,
-                mCameraMatrix,
-                mDistortionCoefficients,
+                mCameraParameters.getCameraMatrix(),
+                mCameraParameters.getDistortion(),
                 rotationVectors,
                 translationVectors,
                 mFlags);
 
-
-        mIsCalibrated = Core.checkRange(mCameraMatrix) && Core.checkRange(mDistortionCoefficients);
-    }
-
-    public Mat getCameraMatrix() {
-        return mCameraMatrix;
-    }
-    public Mat getDistortionCoefficients() {
-        return mDistortionCoefficients;
+        mCameraParameters.checkIsCalibrated();
     }
 
     private void calcBoardCornerPositions(Mat corners) {
