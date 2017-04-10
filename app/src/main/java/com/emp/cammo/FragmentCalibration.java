@@ -43,8 +43,7 @@ public class FragmentCalibration extends Fragment implements View.OnClickListene
     // calibration state
     private boolean mIsCalibrating;
     private String mCalibrationFolder;
-    private CameraCalibrator mCalibrator;
-    private MainActivity mParent;
+    private CameraCalibrator mCalibrator; // can't be local. needs to be saved by setRetainInstance
 
     // constructor
     public static FragmentCalibration newInstance() {
@@ -77,9 +76,6 @@ public class FragmentCalibration extends Fragment implements View.OnClickListene
     @Override
     public void onResume() {
         super.onResume();
-
-        // get camera parameters
-        mParent = (MainActivity) getActivity();
 
         // set widgets
         try {
@@ -194,10 +190,18 @@ public class FragmentCalibration extends Fragment implements View.OnClickListene
         @Override
         protected void onPostExecute(String s) {
             super.onPostExecute(s);
-            mParent.mCameraParameters = mRoutine.getCameraParameters();
+
+            // get parent (MainActivity)
+            MainActivity parent = (MainActivity) getActivity();
+            if (null == parent) return;
+
+            // update camera parameters
+            parent.mCameraParameters = mRoutine.getCameraParameters();
+
+            // update widgets
             setIsCalibrating(false);
             mTextView.setText("finished.");
-            Log.i(TAG, "onPostExecute: " + mParent.mCameraParameters.toString());
+            Log.i(TAG, "onPostExecute: " + parent.mCameraParameters.toString());
         }
 
         @Override
