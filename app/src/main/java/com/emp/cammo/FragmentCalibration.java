@@ -3,6 +3,7 @@ package com.emp.cammo;
 import android.app.Activity;
 import android.app.Fragment;
 import android.content.Context;
+import android.content.pm.ActivityInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -29,6 +30,11 @@ import java.util.List;
 import java.util.Locale;
 
 public class FragmentCalibration extends Fragment implements View.OnClickListener, TextView.OnEditorActionListener {
+    // fragment settings
+    public static final int SCREEN_ORIENTATION = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED;
+    public static final boolean HOME_ARROW = true;
+    public static final int THEME = R.style.AppTheme;
+
     // tag
     public static final String TAG = "FRAGMENT_CALIBRATION";
     private static final String mDefaultFolder = "/storage/extSdCard/Images/front-calibration";
@@ -81,11 +87,14 @@ public class FragmentCalibration extends Fragment implements View.OnClickListene
         try {
             // progress bar
             setIsCalibrating(mIsInitialized && mIsCalibrating);
+
             // button
             mButtonCalibrate.setOnClickListener(this);
+
             // edit text
             setCalibrationFolder(mIsInitialized ? mCalibrationFolder : mDefaultFolder);
             mEditText.setOnEditorActionListener(this);
+
         } catch (NullPointerException e) {
             e.printStackTrace();
         }

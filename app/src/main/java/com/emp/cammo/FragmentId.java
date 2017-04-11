@@ -18,10 +18,10 @@ public enum FragmentId {
 
     public Fragment newInstance() {
         switch (this) {
-            case MainMenu: return FragmentMainMenu.newInstance();
+            case MainMenu:    return FragmentMainMenu.newInstance();
             case Calibration: return FragmentCalibration.newInstance();
-            case Tracking: return null;
-            default: return null;
+            case Tracking:    return FragmentTracking.newInstance();
+            default:          return null;
         }
     }
 

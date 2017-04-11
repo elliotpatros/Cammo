@@ -2,12 +2,14 @@ package com.emp.cammo;
 
 import android.app.Fragment;
 import android.app.FragmentManager;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.FrameLayout;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.LoaderCallbackInterface;
@@ -89,6 +91,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.btn_goto_calibration:
                 setChildFragment(FragmentId.Calibration);
                 break;
+            case R.id.btn_goto_tracking:
+                setChildFragment(FragmentId.Tracking);
+                break;
             default: break;
         }
     }
@@ -139,18 +144,32 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             // replace old fragment with new one
             manager.beginTransaction().replace(R.id.activity_main_layout, fragment, fragmentId.name).commit();
-            setHomeArrow();
+
+            // todo start here
+            // theme should be changed before setting any view (in onCreate())
+            // activity layout changes
+            switch (fragmentId) {
+                case MainMenu:
+                    setRequestedOrientation(FragmentMainMenu.SCREEN_ORIENTATION);
+                    getSupportActionBar().setDisplayHomeAsUpEnabled(FragmentMainMenu.HOME_ARROW);
+                    setTheme(FragmentMainMenu.THEME);
+                    break;
+                case Calibration:
+                    setRequestedOrientation(FragmentCalibration.SCREEN_ORIENTATION);
+                    getSupportActionBar().setDisplayHomeAsUpEnabled(FragmentCalibration.HOME_ARROW);
+                    setTheme(FragmentCalibration.THEME);
+                    break;
+                case Tracking:
+                    setRequestedOrientation(FragmentTracking.SCREEN_ORIENTATION);
+                    getSupportActionBar().setDisplayHomeAsUpEnabled(FragmentTracking.HOME_ARROW);
+                    setTheme(FragmentTracking.THEME);
+                    break;
+                default:
+                    break;
+            }
         } catch (NullPointerException e) {
             e.printStackTrace();
         }
     }
 
-    private void setHomeArrow() {
-        try {
-            boolean shouldBeVisible = !onMainMenu();
-            getSupportActionBar().setDisplayHomeAsUpEnabled(shouldBeVisible);
-        } catch (NullPointerException e) {
-            e.printStackTrace();
-        }
-    }
 }
