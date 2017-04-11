@@ -1,6 +1,7 @@
 package com.emp.cammo;
 
 import android.app.Fragment;
+import android.content.res.Configuration;
 import android.hardware.Camera;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -10,16 +11,23 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 
 import org.opencv.android.CameraBridgeViewBase;
+import org.opencv.calib3d.Calib3d;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfPoint2f;
+import org.opencv.core.Size;
 
 
 public class FragmentTracking extends Fragment implements CameraBridgeViewBase.CvCameraViewListener2 {
 
     // member variables
-    public int mCameraIndex = Camera.CameraInfo.CAMERA_FACING_FRONT;
-    private Mat mMatRgba; // image of current camera view frame
+    public int mCameraIndex = Camera.CameraInfo.CAMERA_FACING_BACK;
+    private Mat mMatRgba; // color image of current frame given by CameraView
+    private Mat mMatGray; // gray image of current frame given by CameraView
+    private MatOfPoint2f mCorners;
+    private final static Size mBoardSize = new Size(5, 3);
+    private final static int mFindFlags = Calib3d.CALIB_CB_FAST_CHECK;
 
     // widgets
     private CameraView mCameraView = null;
@@ -90,17 +98,26 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
         }
     }
 
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+    }
+
     // camera view callbacks
     @Override
     public void onCameraViewStarted(int width, int height) { // size of stream or preview?
         // setup image buffer just once before streaming
         mMatRgba = new Mat(height, width, CvType.CV_8UC4);
+        mMatGray = new Mat(height, width, CvType.CV_8UC1);
+        mCorners = new MatOfPoint2f();
     }
 
     @Override
     public void onCameraViewStopped() {
         // 'free' image buffer after streaming
         mMatRgba.release();
+        mMatGray.release();
+        mCorners.release();
     }
 
     @Override
@@ -112,6 +129,12 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
         if (Camera.CameraInfo.CAMERA_FACING_FRONT == mCameraIndex) {
             Core.flip(mMatRgba, mMatRgba, Core.ROTATE_180);
         }
+
+        // find checkerboard
+        boolean found = Calib3d.findChessboardCorners(frame.gray(), mBoardSize, mCorners, mFindFlags);
+
+        // draw chessboard corners
+        Calib3d.drawChessboardCorners(mMatRgba, mBoardSize, mCorners, found);
 
         // return the image we want to preview
         return mMatRgba;
