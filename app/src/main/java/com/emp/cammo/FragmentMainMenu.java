@@ -9,10 +9,6 @@ import android.view.View;
 import android.view.ViewGroup;
 
 public class FragmentMainMenu extends Fragment {
-    // fragment settings
-    public static final int SCREEN_ORIENTATION = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED;
-    public static final boolean HOME_ARROW = false;
-    public static final int THEME = R.style.AppTheme;
 
     public static FragmentMainMenu newInstance() {
         return new FragmentMainMenu();

@@ -6,8 +6,6 @@ import android.util.AttributeSet;
 import org.opencv.android.JavaCameraView;
 
 public class CameraView extends JavaCameraView {
-    private static final String TAG = "CameraView";
-
     // constructor
     public CameraView(Context context, AttributeSet attributeSet) {
         super(context, attributeSet);

@@ -30,10 +30,6 @@ import java.util.List;
 import java.util.Locale;
 
 public class FragmentCalibration extends Fragment implements View.OnClickListener, TextView.OnEditorActionListener {
-    // fragment settings
-    public static final int SCREEN_ORIENTATION = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED;
-    public static final boolean HOME_ARROW = true;
-    public static final int THEME = R.style.AppTheme;
 
     // tag
     public static final String TAG = "FRAGMENT_CALIBRATION";
@@ -131,11 +127,6 @@ public class FragmentCalibration extends Fragment implements View.OnClickListene
         }
     }
 
-    private void updateProgressBarVisibility() {
-        if (null == mProgressBar) return;
-        mProgressBar.setVisibility(mIsCalibrating ? View.VISIBLE : View.GONE);
-    }
-
     private void setCalibrationFolder(String text) {
         // todo: semaphore
         mCalibrationFolder = text;
@@ -177,7 +168,11 @@ public class FragmentCalibration extends Fragment implements View.OnClickListene
 
     public void setIsCalibrating(boolean isCalibrating) {
         mIsCalibrating = isCalibrating;
-        updateProgressBarVisibility();
+
+        // set progress bar
+        if (null != mProgressBar) {
+            mProgressBar.setVisibility(mIsCalibrating ? View.VISIBLE : View.GONE);
+        }
     }
 
     private class CameraCalibrator extends AsyncTask<Void, String, String> {

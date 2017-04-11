@@ -1,7 +1,7 @@
 package com.emp.cammo;
 
 import android.app.Fragment;
-import android.content.pm.ActivityInfo;
+import android.hardware.Camera;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
@@ -10,20 +10,19 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 
 import org.opencv.android.CameraBridgeViewBase;
+import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 
-public class FragmentTracking extends Fragment implements CameraBridgeViewBase.CvCameraViewListener2 {
-    // fragment settings
-    public static final int SCREEN_ORIENTATION = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
-    public static final boolean HOME_ARROW = false;
-    public static final int THEME = R.style.AppTheme_FullScreen;
 
-    static private final String TAG = "FragmentTracking";
+public class FragmentTracking extends Fragment implements CameraBridgeViewBase.CvCameraViewListener2 {
+
+    // member variables
+    public int mCameraIndex = Camera.CameraInfo.CAMERA_FACING_FRONT;
+    private Mat mMatRgba; // image of current camera view frame
 
     // widgets
     private CameraView mCameraView = null;
-    private Mat imgRgb; // image of current camera view frame
 
     // constructor
     public static FragmentTracking newInstance() {
@@ -38,18 +37,8 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
         // get parent activity (MainActivity)
         MainActivity parent = (MainActivity) getActivity();
         if (null != parent) {
-            // set screen orientation
-//            parent.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-
             // keep window on
             parent.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-
-//            // hide status bar
-//            View decorView = parent.getWindow().getDecorView();
-//            int uiOptions = View.SYSTEM_UI_FLAG_FULLSCREEN;
-//            decorView.setSystemUiVisibility(uiOptions);
-//            ActionBar actionBar = parent.getActionBar();
-//            actionBar.hide();
         }
     }
 
@@ -71,15 +60,12 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
     public void onResume() {
         super.onResume();
 
-        // setup widgets
-        try {
-            // set listener
-            mCameraView.setCvCameraViewListener(this);
-            mCameraView.enableView();
-            mCameraView.setVisibility(View.VISIBLE);
-
-        } catch (NullPointerException e) {
-            e.printStackTrace();
+        // setup camera view widget
+        if (null != mCameraView) {
+            mCameraView.setCvCameraViewListener(this);  // set listener for camera view callbacks
+            mCameraView.setCameraIndex(mCameraIndex);
+            mCameraView.enableView();                   // turn camera stream on
+            mCameraView.setVisibility(View.VISIBLE);    // set widget visibility on
         }
 
         // done
@@ -106,32 +92,28 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
 
     // camera view callbacks
     @Override
-    public void onCameraViewStarted(int width, int height) {
+    public void onCameraViewStarted(int width, int height) { // size of stream or preview?
         // setup image buffer just once before streaming
-        imgRgb = new Mat(height, width, CvType.CV_8UC4);
+        mMatRgba = new Mat(height, width, CvType.CV_8UC4);
     }
 
     @Override
     public void onCameraViewStopped() {
         // 'free' image buffer after streaming
-        imgRgb.release();
+        mMatRgba.release();
     }
 
     @Override
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame frame) {
-        imgRgb = frame.rgba();
+        // get color frame from camera
+        mMatRgba = frame.rgba();
 
-//        imgRot = imgRgb.t();
-//        Core.flip(imgRgb.t(), imgRot, 1);
-//        Imgproc.resize(imgRot, imgRot, imgRgb.size());
+        // front camera is flipped, fix that here if it's active
+        if (Camera.CameraInfo.CAMERA_FACING_FRONT == mCameraIndex) {
+            Core.flip(mMatRgba, mMatRgba, Core.ROTATE_180);
+        }
 
-//        mRgba = inputFrame.rgba();
-//        Mat mRgbaT = mRgba.t();
-//        Core.flip(mRgba.t(), mRgbaT, 1);
-//        Imgproc.resize(mRgbaT, mRgbaT, mRgba.size());
-//        return mRgbaT;
-
-
-        return imgRgb;
+        // return the image we want to preview
+        return mMatRgba;
     }
 }
