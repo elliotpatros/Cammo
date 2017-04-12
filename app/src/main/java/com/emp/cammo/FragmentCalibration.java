@@ -33,7 +33,7 @@ public class FragmentCalibration extends Fragment implements View.OnClickListene
 
     // tag
     public static final String TAG = "FRAGMENT_CALIBRATION";
-    private static final String mDefaultFolder = "/storage/extSdCard/Images/front-calibration";
+    private static final String mDefaultFolder = "/storage/emulated/0/DCIM/Screenshots";
     private boolean mIsInitialized = false;
 
     // widgets
@@ -230,15 +230,15 @@ public class FragmentCalibration extends Fragment implements View.OnClickListene
             mRoutine.calibrate();
 
 
-            /* write test images to disk */ // deleteme!
-            CameraParameters parameters = mRoutine.getCameraParameters();
-            for (int i = 0; i < imagePaths.size(); i++) {
-                publishProgress(String.format(Locale.US, "writing image %d of %d", i+1, imagePaths.size()));
-                Mat distorted = Imgcodecs.imread(imagePaths.get(i), Imgcodecs.CV_LOAD_IMAGE_GRAYSCALE);
-                Mat undistorted = distorted.clone();
-                Imgproc.undistort(distorted, undistorted, parameters.getCameraMatrix(), parameters.getDistortion());
-                Imgcodecs.imwrite(String.format(Locale.US, "/storage/emulated/0/Download/undistorted-%d.png", i), undistorted);
-            }
+//            /* write test images to disk */ // deleteme!
+//            CameraParameters parameters = mRoutine.getCameraParameters();
+//            for (int i = 0; i < imagePaths.size(); i++) {
+//                publishProgress(String.format(Locale.US, "writing image %d of %d", i+1, imagePaths.size()));
+//                Mat distorted = Imgcodecs.imread(imagePaths.get(i), Imgcodecs.CV_LOAD_IMAGE_GRAYSCALE);
+//                Mat undistorted = distorted.clone();
+//                Imgproc.undistort(distorted, undistorted, parameters.getCameraMatrix(), parameters.getDistortion());
+//                Imgcodecs.imwrite(String.format(Locale.US, "/storage/emulated/0/Download/undistorted-%d.png", i), undistorted);
+//            }
 
             return null;
         }

@@ -17,8 +17,10 @@ import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfDouble;
 import org.opencv.core.MatOfPoint2f;
+import org.opencv.core.MatOfPoint3;
 import org.opencv.core.MatOfPoint3f;
 import org.opencv.core.Point;
+import org.opencv.core.Point3;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
@@ -32,12 +34,13 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
     // member variables
     public int mCameraIndex = Camera.CameraInfo.CAMERA_FACING_BACK;
     private Mat mMatRgba; // color image of current frame given by CameraView
-    private Mat mMatGray; // gray image of current frame given by CameraView
+//    private Mat mMatGray; // gray image of current frame given by CameraView
     private MatOfPoint2f mCorners;
     private final static int mFindFlags = Calib3d.CALIB_CB_FAST_CHECK;
 
     // LAZY SHAME
     private final static Size mBoardSize = new Size(4, 3);
+    final float mSquareSize = 30;
     private static MatOfPoint3f mObjectPoints = null;
     private MainActivity parent = null;
     private Mat rvec = null;
@@ -122,7 +125,7 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
     public void onCameraViewStarted(int width, int height) { // size of stream or preview?
         // setup image buffer just once before streaming
         mMatRgba = new Mat(height, width, CvType.CV_8UC4);
-        mMatGray = new Mat(height, width, CvType.CV_8UC1);
+//        mMatGray = new Mat(height, width, CvType.CV_8UC1);
         rvec = new Mat();
         tvec = new Mat();
         mCorners = new MatOfPoint2f();
@@ -134,7 +137,7 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
     public void onCameraViewStopped() {
         // 'free' image buffer after streaming
         mMatRgba.release();
-        mMatGray.release();
+//        mMatGray.release();
         mCorners.release();
         rvec.release();
         tvec.release();
@@ -156,40 +159,27 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
         boolean found = Calib3d.findChessboardCorners(frame.gray(), mBoardSize, mCorners, mFindFlags);
         if (found) {
             // draw chessboard corners
-            Calib3d.drawChessboardCorners(mMatRgba, mBoardSize, mCorners, found);
+            Calib3d.drawChessboardCorners(mMatRgba, mBoardSize, mCorners, true /*found*/);
 
             // find rotation and translation vectors
-            Mat camera = parent.mCameraParameters.getCameraMatrix();
-            Calib3d.solvePnP(mObjectPoints, mCorners, camera, new MatOfDouble(), rvec, tvec);
+            Mat camera = parent.mCameraParameters.getCameraMatrix(); //Mat.eye(3,3,CvType.CV_32FC1); //
+            MatOfDouble distortion = new MatOfDouble(parent.mCameraParameters.getDistortion()); //new MatOfDouble(0, 0, 0, 0, 0);
+            Calib3d.solvePnP(mObjectPoints, mCorners, camera, distortion, rvec, tvec);
 
-            // convert rotation vector to rotation matrix
-            Mat matRotation = new Mat(3, 3, rvec.type());
-            Calib3d.Rodrigues(rvec, matRotation);
+            // project 3d point onto 2d
+            MatOfPoint3f axis3 = new MatOfPoint3f(
+                    new Point3(mSquareSize, 0, 0),
+                    new Point3(0, mSquareSize, 0),
+                    new Point3(0, 0, -mSquareSize));
+            MatOfPoint2f axis2 = new MatOfPoint2f();
+            Calib3d.projectPoints(axis3, rvec, tvec, camera, distortion, axis2);
 
-            // get location (location = -tranlsation/rotation)
-            Mat matTranslation = new Mat(1, 3, tvec.type());
-            matTranslation.put(0, 0, tvec.get(0, 0)[0]);
-            matTranslation.put(0, 1, tvec.get(1, 0)[0]);
-            matTranslation.put(0, 2, tvec.get(2, 0)[0]);
-
-            Mat invRotation = new Mat(matRotation.size(), matRotation.type());
-            matRotation.assignTo(invRotation);
-            invRotation.inv();
-
-            Mat matLocation = new Mat();
-            matLocation = matTranslation.mul(invRotation);
-
-//            Core.gemm(matTranslation, invRotation);
-////            Core.gemm(matTranslation, invRotation, 1., null)
-
-//            // convert rotation vector to rotation matrix
-//            Calib3d.Rodrigues(rvec, ovec);                  // set ovec = rotation matrix
-//
-//            Core.multiply(tvec, ovec.inv(), lvec);
-////            Core.divide(tvec, ovec, lvec);                  // set lvec = translation/rotation
-//            Core.multiply(lvec, new Scalar(-1.), lvec);     // set lvec = location vector
-//
-//            ovec.t();                                       // set ovec = orientation matrix
+            // draw axis
+            Point corner = mCorners.toArray()[0];
+            Point[] imgPoints = axis2.toArray();
+            Imgproc.line(mMatRgba, corner, imgPoints[0], new Scalar(255, 0, 0), 2);
+            Imgproc.line(mMatRgba, corner, imgPoints[1], new Scalar(0, 255, 0), 2);
+            Imgproc.line(mMatRgba, corner, imgPoints[2], new Scalar(0, 0, 255), 2);
 
             // draw background
             Mat roi = new Mat(mMatRgba, new Rect(0, 0, 160, 100));
@@ -197,16 +187,16 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
             Core.addWeighted(infoBlock, 0.3, roi, 0.7, 0., roi);
 
             // draw x
-            final String x = String.format(Locale.US, "x = %f", tvec.get(0, 0)[0]);
+            final String x = String.format(Locale.US, "x = %f", imgPoints[0].x);
             Imgproc.putText(mMatRgba, x, new Point(10, 25), Core.FONT_HERSHEY_SIMPLEX, 0.5, new Scalar(0));
 
             // draw y
-            final String y = String.format(Locale.US, "y = %f", tvec.get(1, 0)[0]);
+            final String y = String.format(Locale.US, "y = %f", imgPoints[0].y);
             Imgproc.putText(mMatRgba, y, new Point(10, 50), Core.FONT_HERSHEY_SIMPLEX, 0.5, new Scalar(0));
 
-            // draw z
-            final String z = String.format(Locale.US, "z = %f", tvec.get(2, 0)[0]);
-            Imgproc.putText(mMatRgba, z, new Point(10, 75), Core.FONT_HERSHEY_SIMPLEX, 0.5, new Scalar(0));
+//            // draw z
+//            final String z = String.format(Locale.US, "z = %f", tvec.get(2, 0)[0]);
+//            Imgproc.putText(mMatRgba, z, new Point(10, 75), Core.FONT_HERSHEY_SIMPLEX, 0.5, new Scalar(0));
         }
 
         // return the image we want to preview
@@ -215,13 +205,12 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
 
     private void calcObjectPoints() {
         final int nPoints = (int)(mBoardSize.width * mBoardSize.height);
-        final float squareSize = 40;
         float positions[] = new float[nPoints * 3];
         int i = 0;
         for (int row = 0; row < mBoardSize.height; row++) {
             for (int col = 0; col < mBoardSize.width; col++) {
-                positions[i++] = col * squareSize;
-                positions[i++] = row * squareSize;
+                positions[i++] = col * mSquareSize;
+                positions[i++] = row * mSquareSize;
                 positions[i++] = 0.f;
             }
         }
