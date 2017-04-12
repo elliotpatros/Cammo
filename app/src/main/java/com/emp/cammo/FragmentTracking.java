@@ -42,8 +42,8 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
     private MainActivity parent = null;
     private Mat rvec = null;
     private Mat tvec = null;
-//    private Mat ovec = null;
-//    private Mat lvec = null;
+    private Mat ovec = null;
+    private Mat lvec = null;
 
     // widgets
     private CameraView mCameraView = null;
@@ -127,8 +127,8 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
         mMatGray = new Mat(height, width, CvType.CV_8UC1);
         rvec = new Mat();
         tvec = new Mat();
-//        ovec = new Mat();
-//        lvec = new Mat();
+        ovec = new Mat();
+        lvec = new Mat();
         mCorners = new MatOfPoint2f();
         calcObjectPoints(); // mObjectPoints
         parent = (MainActivity) getActivity();
@@ -237,5 +237,6 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
 
         return s;
     }
+
 
 }
