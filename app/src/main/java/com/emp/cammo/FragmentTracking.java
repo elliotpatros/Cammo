@@ -181,18 +181,18 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
             Imgproc.line(mMatRgba, corner, imgPoints[1], new Scalar(0, 255, 0), 2);
             Imgproc.line(mMatRgba, corner, imgPoints[2], new Scalar(0, 0, 255), 2);
 
-            // draw background
-            Mat roi = new Mat(mMatRgba, new Rect(0, 0, 160, 100));
-            Mat infoBlock = new Mat(roi.size(), mMatRgba.type(), new Scalar(255, 255, 255));
-            Core.addWeighted(infoBlock, 0.3, roi, 0.7, 0., roi);
-
-            // draw x
-            final String x = String.format(Locale.US, "x = %f", imgPoints[0].x);
-            Imgproc.putText(mMatRgba, x, new Point(10, 25), Core.FONT_HERSHEY_SIMPLEX, 0.5, new Scalar(0));
-
-            // draw y
-            final String y = String.format(Locale.US, "y = %f", imgPoints[0].y);
-            Imgproc.putText(mMatRgba, y, new Point(10, 50), Core.FONT_HERSHEY_SIMPLEX, 0.5, new Scalar(0));
+//            // draw background
+//            Mat roi = new Mat(mMatRgba, new Rect(0, 0, 160, 100));
+//            Mat infoBlock = new Mat(roi.size(), mMatRgba.type(), new Scalar(255, 255, 255));
+//            Core.addWeighted(infoBlock, 0.3, roi, 0.7, 0., roi);
+//
+//            // draw x
+//            final String x = String.format(Locale.US, "x = %f", imgPoints[0].x);
+//            Imgproc.putText(mMatRgba, x, new Point(10, 25), Core.FONT_HERSHEY_SIMPLEX, 0.5, new Scalar(0));
+//
+//            // draw y
+//            final String y = String.format(Locale.US, "y = %f", imgPoints[0].y);
+//            Imgproc.putText(mMatRgba, y, new Point(10, 50), Core.FONT_HERSHEY_SIMPLEX, 0.5, new Scalar(0));
 
 //            // draw z
 //            final String z = String.format(Locale.US, "z = %f", tvec.get(2, 0)[0]);
