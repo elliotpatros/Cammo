@@ -2,14 +2,10 @@ package com.emp.cammo;
 
 import android.app.Fragment;
 import android.app.FragmentManager;
-import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
-import android.view.MenuItem;
 import android.view.View;
-import android.widget.FrameLayout;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.LoaderCallbackInterface;
@@ -114,6 +110,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onBackPressed() {
         if (!onMainMenu()) {
             setChildFragment(FragmentId.MainMenu);
+        } else {
+            super.onBackPressed();
         }
     }
 
