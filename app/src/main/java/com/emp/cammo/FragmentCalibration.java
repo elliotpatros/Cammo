@@ -199,7 +199,7 @@ public class FragmentCalibration extends Fragment implements View.OnClickListene
             MainActivity parent = (MainActivity) getActivity();
             if (null == parent) return;
 
-            // update camera parameters
+            // update mCamera parameters
             parent.mCameraParameters = mRoutine.getCameraParameters();
 
             // update widgets

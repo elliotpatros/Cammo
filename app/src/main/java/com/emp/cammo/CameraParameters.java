@@ -48,7 +48,7 @@ public class CameraParameters {
             mCameraMatrix = loadMatrix(bundle, stateCameraMatrix);
         }
 
-        // try to restore distortion coefficients
+        // try to restore mDistortion coefficients
         if (bundle.containsKey(stateDistortionCoefficients)) {
             mDistortionCoefficients = loadMatrix(bundle, stateDistortionCoefficients);
         }
@@ -136,10 +136,10 @@ public class CameraParameters {
     @Override
     public String toString() {
 
-        // format camera matrix
+        // format mCamera matrix
         String camera = String.format(Locale.US, "Camera matrix: %s", MatToString(mCameraMatrix));
 
-        // format distortion coefficients
+        // format mDistortion coefficients
         String distort = String.format(Locale.US, "Distortion coefficients: %s", MatToString(mDistortionCoefficients));
 
         return camera + "\n" + distort;

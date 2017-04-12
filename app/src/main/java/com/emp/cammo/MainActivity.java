@@ -102,7 +102,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         // save fragment id name
         outState.putString(FragmentId.TAG, mCurrentFragmentId.name);
 
-        // save camera parameters
+        // save mCamera parameters
         if (null != mCameraParameters) {
             mCameraParameters.saveState(outState);
         }

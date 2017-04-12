@@ -16,17 +16,17 @@ import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfDouble;
+import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
-import org.opencv.core.MatOfPoint3;
 import org.opencv.core.MatOfPoint3f;
 import org.opencv.core.Point;
 import org.opencv.core.Point3;
-import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
-import java.util.Locale;
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class FragmentTracking extends Fragment implements CameraBridgeViewBase.CvCameraViewListener2 {
@@ -41,10 +41,18 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
     // LAZY SHAME
     private final static Size mBoardSize = new Size(4, 3);
     final float mSquareSize = 30;
-    private static MatOfPoint3f mObjectPoints = null;
-    private MainActivity parent = null;
+    private MatOfPoint3f mObjectPoints = null;
     private Mat rvec = null;
     private Mat tvec = null;
+
+    // EVEN LAZIER
+    MatOfPoint3f worldPoints = null;
+    MatOfPoint2f imagePoints = null;
+//    MatOfPoint3f axis3 = null;
+//    MatOfPoint2f axis2 = null;
+    Mat mCamera = null;
+    MatOfDouble mDistortion = null;
+
 
     // widgets
     private CameraView mCameraView = null;
@@ -85,11 +93,11 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
     public void onResume() {
         super.onResume();
 
-        // setup camera view widget
+        // setup mCamera view widget
         if (null != mCameraView) {
-            mCameraView.setCvCameraViewListener(this);  // set listener for camera view callbacks
+            mCameraView.setCvCameraViewListener(this);  // set listener for mCamera view callbacks
             mCameraView.setCameraIndex(mCameraIndex);
-            mCameraView.enableView();                   // turn camera stream on
+            mCameraView.enableView();                   // turn mCamera stream on
             mCameraView.setVisibility(View.VISIBLE);    // set widget visibility on
         }
 
@@ -120,7 +128,7 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
         super.onConfigurationChanged(newConfig);
     }
 
-    // camera view callbacks
+    // mCamera view callbacks
     @Override
     public void onCameraViewStarted(int width, int height) { // size of stream or preview?
         // setup image buffer just once before streaming
@@ -130,7 +138,24 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
         tvec = new Mat();
         mCorners = new MatOfPoint2f();
         calcObjectPoints(); // mObjectPoints
-        parent = (MainActivity) getActivity();
+
+        imagePoints = new MatOfPoint2f();
+        worldPoints = new MatOfPoint3f(
+                new Point3(0, 0, -1),
+                new Point3(0, 1, -1),
+                new Point3(1, 1, -1),
+                new Point3(1, 0, -1));
+        worldPoints.mul(worldPoints, mSquareSize);
+
+//        axis2 = new MatOfPoint2f();
+//        axis3 = new MatOfPoint3f(
+//                new Point3(mSquareSize, 0, 0),
+//                new Point3(0, mSquareSize, 0),
+//                new Point3(0, 0, -mSquareSize));
+
+        MainActivity parent = (MainActivity) getActivity();
+        mCamera = parent.mCameraParameters.getCameraMatrix();
+        mDistortion = new MatOfDouble(parent.mCameraParameters.getDistortion());
     }
 
     @Override
@@ -142,15 +167,20 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
         rvec.release();
         tvec.release();
         mObjectPoints.release();
-        parent = null;
+
+        worldPoints.release();
+        imagePoints.release();
+//        axis3.release();
+//        axis2.release();
+        mDistortion.release();
     }
 
     @Override
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame frame) {
-        // get color frame from camera
+        // get color frame from mCamera
         mMatRgba = frame.rgba();
 
-        // front camera is flipped, fix that here if it's active
+        // front mCamera is flipped, fix that here if it's active
         if (Camera.CameraInfo.CAMERA_FACING_FRONT == mCameraIndex) {
             Core.flip(mMatRgba, mMatRgba, Core.ROTATE_180);
         }
@@ -159,27 +189,25 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
         boolean found = Calib3d.findChessboardCorners(frame.gray(), mBoardSize, mCorners, mFindFlags);
         if (found) {
             // draw chessboard corners
-            Calib3d.drawChessboardCorners(mMatRgba, mBoardSize, mCorners, true /*found*/);
+//            Calib3d.drawChessboardCorners(mMatRgba, mBoardSize, mCorners, true /*found*/);
 
             // find rotation and translation vectors
-            Mat camera = parent.mCameraParameters.getCameraMatrix(); //Mat.eye(3,3,CvType.CV_32FC1); //
-            MatOfDouble distortion = new MatOfDouble(parent.mCameraParameters.getDistortion()); //new MatOfDouble(0, 0, 0, 0, 0);
-            Calib3d.solvePnP(mObjectPoints, mCorners, camera, distortion, rvec, tvec);
+            Calib3d.solvePnP(mObjectPoints, mCorners, mCamera, mDistortion, rvec, tvec);
 
             // project 3d point onto 2d
-            MatOfPoint3f axis3 = new MatOfPoint3f(
-                    new Point3(mSquareSize, 0, 0),
-                    new Point3(0, mSquareSize, 0),
-                    new Point3(0, 0, -mSquareSize));
-            MatOfPoint2f axis2 = new MatOfPoint2f();
-            Calib3d.projectPoints(axis3, rvec, tvec, camera, distortion, axis2);
+            Calib3d.projectPoints(worldPoints, rvec, tvec, mCamera, mDistortion, imagePoints);
 
             // draw axis
-            Point corner = mCorners.toArray()[0];
-            Point[] imgPoints = axis2.toArray();
-            Imgproc.line(mMatRgba, corner, imgPoints[0], new Scalar(255, 0, 0), 2);
-            Imgproc.line(mMatRgba, corner, imgPoints[1], new Scalar(0, 255, 0), 2);
-            Imgproc.line(mMatRgba, corner, imgPoints[2], new Scalar(0, 0, 255), 2);
+            Point corner = new Point(mCorners.get(0, 0));
+            List<MatOfPoint> pointList = new ArrayList<>(1);
+            pointList.add(new MatOfPoint(imagePoints));
+
+            Imgproc.drawContours(mMatRgba, pointList, -1, new Scalar(255), 5);
+
+//            Imgproc.drawContours(mMatRgba, new List<MatOfPoint>(imgPoints), -1, new Scalar(255));
+//            Imgproc.line(mMatRgba, corner, imgPoints[0], new Scalar(255, 0, 0), 2);
+//            Imgproc.line(mMatRgba, corner, imgPoints[1], new Scalar(0, 255, 0), 2);
+//            Imgproc.line(mMatRgba, corner, imgPoints[2], new Scalar(0, 0, 255), 2);
 
 //            // draw background
 //            Mat roi = new Mat(mMatRgba, new Rect(0, 0, 160, 100));
