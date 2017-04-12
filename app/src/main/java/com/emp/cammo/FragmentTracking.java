@@ -46,8 +46,10 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
     private Mat tvec = null;
 
     // EVEN LAZIER
-    MatOfPoint3f worldPoints = null;
-    MatOfPoint2f imagePoints = null;
+    MatOfPoint3f worldPointsB = null;
+    MatOfPoint2f imagePointsB = null;
+    MatOfPoint3f worldPointsT = null;
+    MatOfPoint2f imagePointsT = null;
 //    MatOfPoint3f axis3 = null;
 //    MatOfPoint2f axis2 = null;
     Mat mCamera = null;
@@ -139,13 +141,19 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
         mCorners = new MatOfPoint2f();
         calcObjectPoints(); // mObjectPoints
 
-        imagePoints = new MatOfPoint2f();
-        worldPoints = new MatOfPoint3f(
-                new Point3(0, 0, -1),
-                new Point3(0, 1, -1),
-                new Point3(1, 1, -1),
-                new Point3(1, 0, -1));
-        worldPoints.mul(worldPoints, mSquareSize);
+        imagePointsB = new MatOfPoint2f();
+        worldPointsB = new MatOfPoint3f(
+                new Point3(0,               0,              0),
+                new Point3(0,               -mSquareSize,   0),
+                new Point3(-mSquareSize,    -mSquareSize,   0),
+                new Point3(-mSquareSize,    0,              0));
+
+        imagePointsT = new MatOfPoint2f();
+        worldPointsT = new MatOfPoint3f(
+                new Point3(0,               0,              -mSquareSize),
+                new Point3(0,               -mSquareSize,   -mSquareSize),
+                new Point3(-mSquareSize,    -mSquareSize,   -mSquareSize),
+                new Point3(-mSquareSize,    0,              -mSquareSize));
 
 //        axis2 = new MatOfPoint2f();
 //        axis3 = new MatOfPoint3f(
@@ -168,8 +176,8 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
         tvec.release();
         mObjectPoints.release();
 
-        worldPoints.release();
-        imagePoints.release();
+        worldPointsB.release();
+        imagePointsB.release();
 //        axis3.release();
 //        axis2.release();
         mDistortion.release();
@@ -188,43 +196,50 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
         // find checkerboard
         boolean found = Calib3d.findChessboardCorners(frame.gray(), mBoardSize, mCorners, mFindFlags);
         if (found) {
-            // draw chessboard corners
-//            Calib3d.drawChessboardCorners(mMatRgba, mBoardSize, mCorners, true /*found*/);
-
             // find rotation and translation vectors
             Calib3d.solvePnP(mObjectPoints, mCorners, mCamera, mDistortion, rvec, tvec);
 
             // project 3d point onto 2d
-            Calib3d.projectPoints(worldPoints, rvec, tvec, mCamera, mDistortion, imagePoints);
+            Calib3d.projectPoints(worldPointsB, rvec, tvec, mCamera, mDistortion, imagePointsB);
+            Calib3d.projectPoints(worldPointsT, rvec, tvec, mCamera, mDistortion, imagePointsT);
 
-            // draw axis
-            Point corner = new Point(mCorners.get(0, 0));
-            List<MatOfPoint> pointList = new ArrayList<>(1);
-            pointList.add(new MatOfPoint(imagePoints));
+            // draw boxes (B = bottom, T = top)
+            List<MatOfPoint>
+                    pointListB = new ArrayList<>(1),
+                    pointListT = new ArrayList<>(1);
 
-            Imgproc.drawContours(mMatRgba, pointList, -1, new Scalar(255), 5);
+            pointListB.add(new MatOfPoint(imagePointsB.toArray()));
+            pointListT.add(new MatOfPoint(imagePointsT.toArray()));
 
-//            Imgproc.drawContours(mMatRgba, new List<MatOfPoint>(imgPoints), -1, new Scalar(255));
-//            Imgproc.line(mMatRgba, corner, imgPoints[0], new Scalar(255, 0, 0), 2);
-//            Imgproc.line(mMatRgba, corner, imgPoints[1], new Scalar(0, 255, 0), 2);
-//            Imgproc.line(mMatRgba, corner, imgPoints[2], new Scalar(0, 0, 255), 2);
-
-//            // draw background
-//            Mat roi = new Mat(mMatRgba, new Rect(0, 0, 160, 100));
-//            Mat infoBlock = new Mat(roi.size(), mMatRgba.type(), new Scalar(255, 255, 255));
-//            Core.addWeighted(infoBlock, 0.3, roi, 0.7, 0., roi);
+            Imgproc.drawContours(mMatRgba, pointListB, -1, new Scalar(255), 2);
+            Imgproc.drawContours(mMatRgba, pointListT, -1, new Scalar(0, 0, 255), 2);
 //
-//            // draw x
-//            final String x = String.format(Locale.US, "x = %f", imgPoints[0].x);
-//            Imgproc.putText(mMatRgba, x, new Point(10, 25), Core.FONT_HERSHEY_SIMPLEX, 0.5, new Scalar(0));
-//
-//            // draw y
-//            final String y = String.format(Locale.US, "y = %f", imgPoints[0].y);
-//            Imgproc.putText(mMatRgba, y, new Point(10, 50), Core.FONT_HERSHEY_SIMPLEX, 0.5, new Scalar(0));
-
-//            // draw z
-//            final String z = String.format(Locale.US, "z = %f", tvec.get(2, 0)[0]);
-//            Imgproc.putText(mMatRgba, z, new Point(10, 75), Core.FONT_HERSHEY_SIMPLEX, 0.5, new Scalar(0));
+            // draw lines
+            Scalar lineColor = new Scalar(0, 255, 0);
+            Imgproc.line(
+                    mMatRgba,
+                    new Point(imagePointsB.get(0, 0)),
+                    new Point(imagePointsT.get(0, 0)),
+                    lineColor,
+                    2);
+            Imgproc.line(
+                    mMatRgba,
+                    new Point(imagePointsB.get(1, 0)),
+                    new Point(imagePointsT.get(1, 0)),
+                    lineColor,
+                    2);
+            Imgproc.line(
+                    mMatRgba,
+                    new Point(imagePointsB.get(2, 0)),
+                    new Point(imagePointsT.get(2, 0)),
+                    lineColor,
+                    2);
+            Imgproc.line(
+                    mMatRgba,
+                    new Point(imagePointsB.get(3, 0)),
+                    new Point(imagePointsT.get(3, 0)),
+                    lineColor,
+                    2);
         }
 
         // return the image we want to preview
