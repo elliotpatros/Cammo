@@ -42,8 +42,6 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
     private MainActivity parent = null;
     private Mat rvec = null;
     private Mat tvec = null;
-    private Mat ovec = null;
-    private Mat lvec = null;
 
     // widgets
     private CameraView mCameraView = null;
@@ -127,8 +125,6 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
         mMatGray = new Mat(height, width, CvType.CV_8UC1);
         rvec = new Mat();
         tvec = new Mat();
-        ovec = new Mat();
-        lvec = new Mat();
         mCorners = new MatOfPoint2f();
         calcObjectPoints(); // mObjectPoints
         parent = (MainActivity) getActivity();
@@ -142,8 +138,6 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
         mCorners.release();
         rvec.release();
         tvec.release();
-//        ovec.release();
-//        lvec.release();
         mObjectPoints.release();
         parent = null;
     }
@@ -168,15 +162,34 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
             Mat camera = parent.mCameraParameters.getCameraMatrix();
             Calib3d.solvePnP(mObjectPoints, mCorners, camera, new MatOfDouble(), rvec, tvec);
 
+            // convert rotation vector to rotation matrix
+            Mat matRotation = new Mat(3, 3, rvec.type());
+            Calib3d.Rodrigues(rvec, matRotation);
+
+            // get location (location = -tranlsation/rotation)
+            Mat matTranslation = new Mat(1, 3, tvec.type());
+            matTranslation.put(0, 0, tvec.get(0, 0)[0]);
+            matTranslation.put(0, 1, tvec.get(1, 0)[0]);
+            matTranslation.put(0, 2, tvec.get(2, 0)[0]);
+
+            Mat invRotation = new Mat(matRotation.size(), matRotation.type());
+            matRotation.assignTo(invRotation);
+            invRotation.inv();
+
+            Mat matLocation = new Mat();
+            matLocation = matTranslation.mul(invRotation);
+
+//            Core.gemm(matTranslation, invRotation);
+////            Core.gemm(matTranslation, invRotation, 1., null)
+
 //            // convert rotation vector to rotation matrix
-//            Calib3d.Rodrigues(rvec, ovec);
+//            Calib3d.Rodrigues(rvec, ovec);                  // set ovec = rotation matrix
 //
-//            // get location vector (-tvec/ovec)
-////            Core.divide(tvec, ovec, lvec);
-//            Core.multiply(lvec, new Scalar(-1.), lvec);
+//            Core.multiply(tvec, ovec.inv(), lvec);
+////            Core.divide(tvec, ovec, lvec);                  // set lvec = translation/rotation
+//            Core.multiply(lvec, new Scalar(-1.), lvec);     // set lvec = location vector
 //
-//            // get orientation (rvec')
-//            ovec.t();
+//            ovec.t();                                       // set ovec = orientation matrix
 
             // draw background
             Mat roi = new Mat(mMatRgba, new Rect(0, 0, 160, 100));

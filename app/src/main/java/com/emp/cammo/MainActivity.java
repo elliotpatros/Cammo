@@ -16,6 +16,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public CameraParameters mCameraParameters = null;
     private Bundle mBundle = null;
 
+    static {System.loadLibrary("opencv_java3");}
+
     // opencv loader
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
