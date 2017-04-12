@@ -3,7 +3,6 @@ package com.emp.cammo;
 import android.app.Activity;
 import android.app.Fragment;
 import android.content.Context;
-import android.content.pm.ActivityInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -41,6 +40,7 @@ public class FragmentCalibration extends Fragment implements View.OnClickListene
     private Button mButtonCalibrate = null;
     private EditText mEditText = null;
     private TextView mTextView = null;
+    private String mTextViewStatus = "press 'calibrate' to start";
 
     // calibration state
     private boolean mIsCalibrating;
@@ -79,6 +79,7 @@ public class FragmentCalibration extends Fragment implements View.OnClickListene
     public void onResume() {
         super.onResume();
 
+        Log.d(TAG, "onResume: " + mIsInitialized);
         // set widgets
         try {
             // progress bar
@@ -90,6 +91,9 @@ public class FragmentCalibration extends Fragment implements View.OnClickListene
             // edit text
             setCalibrationFolder(mIsInitialized ? mCalibrationFolder : mDefaultFolder);
             mEditText.setOnEditorActionListener(this);
+
+            // mTextView
+            mTextView.setText(mTextViewStatus);
 
         } catch (NullPointerException e) {
             e.printStackTrace();
@@ -140,6 +144,11 @@ public class FragmentCalibration extends Fragment implements View.OnClickListene
         return mCalibrationFolder;
     }
 
+    private void setTextViewStatus(String status) {
+        mTextViewStatus = status;
+        mTextView.setText(mTextViewStatus);
+    }
+
     @Override
     public boolean onEditorAction(TextView view, int actionId, KeyEvent event) {
         if (R.id.editText_calibration_folder == view.getId()) {
@@ -188,7 +197,7 @@ public class FragmentCalibration extends Fragment implements View.OnClickListene
         @Override
         protected void onProgressUpdate(String... values) {
             super.onProgressUpdate(values);
-            mTextView.setText(values[0]);
+            setTextViewStatus(values[0]);
         }
 
         @Override
@@ -204,7 +213,7 @@ public class FragmentCalibration extends Fragment implements View.OnClickListene
 
             // update widgets
             setIsCalibrating(false);
-            mTextView.setText("finished.");
+            setTextViewStatus("finished");
             Log.i(TAG, "onPostExecute: " + parent.mCameraParameters.toString());
         }
 
@@ -229,16 +238,15 @@ public class FragmentCalibration extends Fragment implements View.OnClickListene
             publishProgress("calibrating...");
             mRoutine.calibrate();
 
-
-//            /* write test images to disk */ // deleteme!
-//            CameraParameters parameters = mRoutine.getCameraParameters();
-//            for (int i = 0; i < imagePaths.size(); i++) {
-//                publishProgress(String.format(Locale.US, "writing image %d of %d", i+1, imagePaths.size()));
-//                Mat distorted = Imgcodecs.imread(imagePaths.get(i), Imgcodecs.CV_LOAD_IMAGE_GRAYSCALE);
-//                Mat undistorted = distorted.clone();
-//                Imgproc.undistort(distorted, undistorted, parameters.getCameraMatrix(), parameters.getDistortion());
-//                Imgcodecs.imwrite(String.format(Locale.US, "/storage/emulated/0/Download/undistorted-%d.png", i), undistorted);
-//            }
+            /* write test images to disk */ // deleteme!
+            CameraParameters parameters = mRoutine.getCameraParameters();
+            for (int i = 0; i < imagePaths.size(); i++) {
+                publishProgress(String.format(Locale.US, "writing image %d of %d", i+1, imagePaths.size()));
+                Mat distorted = Imgcodecs.imread(imagePaths.get(i), Imgcodecs.CV_LOAD_IMAGE_GRAYSCALE);
+                Mat undistorted = distorted.clone();
+                Imgproc.undistort(distorted, undistorted, parameters.getCameraMatrix(), parameters.getDistortion());
+                Imgcodecs.imwrite(String.format(Locale.US, "/storage/emulated/0/Download/undistorted-%d.png", i), undistorted);
+            }
 
             return null;
         }

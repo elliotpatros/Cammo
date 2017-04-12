@@ -263,25 +263,4 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
         mObjectPoints.put(0, 0, positions);
     }
 
-    private String MatToString(Mat mat) {
-        if (null == mat) return "null";
-
-        final int nChannels = mat.channels();
-
-        String s = "";
-        final int nRows = mat.rows();
-        final int nCols = mat.cols();
-        for (int row = 0; row < nRows; row++) {
-            s += "\n\t";
-            for (int col = 0; col < nCols; col++) {
-                for (int chan = 0; chan < nChannels; chan++) {
-                    s += mat.get(row, col)[chan] + ", ";
-                }
-            }
-        }
-
-        return s;
-    }
-
-
 }

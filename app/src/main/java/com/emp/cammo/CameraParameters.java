@@ -29,6 +29,8 @@ public class CameraParameters {
     public CameraParameters(Bundle bundle) {
         mIsCalibrated = false;
         Mat.eye(3, 3, CvType.CV_64FC1).copyTo(mCameraMatrix);
+        mCameraMatrix.put(2, 3, 1);
+        mCameraMatrix.put(3, 3, 1);
         Mat.zeros(5, 1, CvType.CV_64FC1).copyTo(mDistortionCoefficients);
 
         restoreState(bundle);
