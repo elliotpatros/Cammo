@@ -66,7 +66,8 @@ public class CalibrationRoutine {
         }
 
 //        double rms =
-        Calib3d.calibrateCamera(objectPoints,
+        Calib3d.calibrateCamera(
+                objectPoints,
                 mCornersBuffer,
                 mImageSize,
                 mCameraParameters.getCameraMatrix(),

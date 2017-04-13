@@ -50,8 +50,6 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
     MatOfPoint2f imagePointsB = null;
     MatOfPoint3f worldPointsT = null;
     MatOfPoint2f imagePointsT = null;
-//    MatOfPoint3f axis3 = null;
-//    MatOfPoint2f axis2 = null;
     Mat mCamera = null;
     MatOfDouble mDistortion = null;
 
@@ -135,31 +133,22 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
     public void onCameraViewStarted(int width, int height) { // size of stream or preview?
         // setup image buffer just once before streaming
         mMatRgba = new Mat(height, width, CvType.CV_8UC4);
-//        mMatGray = new Mat(height, width, CvType.CV_8UC1);
         rvec = new Mat();
         tvec = new Mat();
         mCorners = new MatOfPoint2f();
         calcObjectPoints(); // mObjectPoints
 
+        Point3 TL = new Point3(mObjectPoints.get(0,                                                 0));
+        Point3 TR = new Point3(mObjectPoints.get((int)mBoardSize.width - 1,                         0));
+        Point3 BL = new Point3(mObjectPoints.get((int)(mBoardSize.width * (mBoardSize.height - 1)), 0));
+        Point3 BR = new Point3(mObjectPoints.get((int)(mBoardSize.width *  mBoardSize.height - 1),  0));
         imagePointsB = new MatOfPoint2f();
-        worldPointsB = new MatOfPoint3f(
-                new Point3(0,               0,              0),
-                new Point3(0,               -mSquareSize,   0),
-                new Point3(-mSquareSize,    -mSquareSize,   0),
-                new Point3(-mSquareSize,    0,              0));
+        worldPointsB = new MatOfPoint3f(TL, BL, BR, TR);
+
+        TL.z = TR.z = BL.z = BR.z = -mSquareSize;
 
         imagePointsT = new MatOfPoint2f();
-        worldPointsT = new MatOfPoint3f(
-                new Point3(0,               0,              -mSquareSize),
-                new Point3(0,               -mSquareSize,   -mSquareSize),
-                new Point3(-mSquareSize,    -mSquareSize,   -mSquareSize),
-                new Point3(-mSquareSize,    0,              -mSquareSize));
-
-//        axis2 = new MatOfPoint2f();
-//        axis3 = new MatOfPoint3f(
-//                new Point3(mSquareSize, 0, 0),
-//                new Point3(0, mSquareSize, 0),
-//                new Point3(0, 0, -mSquareSize));
+        worldPointsT = new MatOfPoint3f(TL, BL, BR, TR);
 
         MainActivity parent = (MainActivity) getActivity();
         mCamera = parent.mCameraParameters.getCameraMatrix();
@@ -170,7 +159,6 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
     public void onCameraViewStopped() {
         // 'free' image buffer after streaming
         mMatRgba.release();
-//        mMatGray.release();
         mCorners.release();
         rvec.release();
         tvec.release();
@@ -178,8 +166,6 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
 
         worldPointsB.release();
         imagePointsB.release();
-//        axis3.release();
-//        axis2.release();
         mDistortion.release();
     }
 
@@ -213,9 +199,9 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
 
             Imgproc.drawContours(mMatRgba, pointListB, -1, new Scalar(255), 2);
             Imgproc.drawContours(mMatRgba, pointListT, -1, new Scalar(0, 0, 255), 2);
-//
+
             // draw lines
-            Scalar lineColor = new Scalar(0, 255, 0);
+            Scalar lineColor = new Scalar(255, 0, 255);
             Imgproc.line(
                     mMatRgba,
                     new Point(imagePointsB.get(0, 0)),
