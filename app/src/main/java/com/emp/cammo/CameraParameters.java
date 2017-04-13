@@ -119,7 +119,6 @@ public class CameraParameters {
         final int nCols = bundle.getInt(key + "_cols");
         final int type = bundle.getInt(key + "_type");
 
-
         Mat mat = new Mat(nRows, nCols, type);
 
         // get values

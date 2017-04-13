@@ -26,6 +26,7 @@ public class CalibrationRoutine {
     private final static int mFlags =
                     Calib3d.CALIB_FIX_ASPECT_RATIO +
                     Calib3d.CALIB_ZERO_TANGENT_DIST +
+                    Calib3d.CALIB_FIX_K3 +
                     Calib3d.CALIB_FIX_K4 +
                     Calib3d.CALIB_FIX_K5;
 
