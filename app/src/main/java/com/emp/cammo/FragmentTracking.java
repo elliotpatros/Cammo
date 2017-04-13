@@ -5,6 +5,7 @@ import android.content.res.Configuration;
 import android.hardware.Camera;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -34,13 +35,13 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
     // member variables
     public int mCameraIndex = Camera.CameraInfo.CAMERA_FACING_BACK;
     private Mat mMatRgba; // color image of current frame given by CameraView
-//    private Mat mMatGray; // gray image of current frame given by CameraView
     private MatOfPoint2f mCorners;
     private final static int mFindFlags = Calib3d.CALIB_CB_FAST_CHECK;
 
     // LAZY SHAME
     private final static Size mBoardSize = new Size(4, 3);
     final float mSquareSize = 30;
+    Scalar mColor = new Scalar(255);
     private MatOfPoint3f mObjectPoints = null;
     private Mat rvec = null;
     private Mat tvec = null;
@@ -142,13 +143,13 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
         Point3 TR = new Point3(mObjectPoints.get((int)mBoardSize.width - 1,                         0));
         Point3 BL = new Point3(mObjectPoints.get((int)(mBoardSize.width * (mBoardSize.height - 1)), 0));
         Point3 BR = new Point3(mObjectPoints.get((int)(mBoardSize.width *  mBoardSize.height - 1),  0));
-        imagePointsB = new MatOfPoint2f();
-        worldPointsB = new MatOfPoint3f(TL, BL, BR, TR);
 
-        TL.z = TR.z = BL.z = BR.z = -mSquareSize;
+        worldPointsB = new MatOfPoint3f(TL, BL, BR, TR);
+        TL.z = TR.z = BL.z = BR.z = -mSquareSize * 2;
+        worldPointsT = new MatOfPoint3f(TL, BL, BR, TR);
 
         imagePointsT = new MatOfPoint2f();
-        worldPointsT = new MatOfPoint3f(TL, BL, BR, TR);
+        imagePointsB = new MatOfPoint2f();
 
         MainActivity parent = (MainActivity) getActivity();
         mCamera = parent.mCameraParameters.getCameraMatrix();
@@ -160,12 +161,14 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
         // 'free' image buffer after streaming
         mMatRgba.release();
         mCorners.release();
+        mObjectPoints.release();
         rvec.release();
         tvec.release();
-        mObjectPoints.release();
 
         worldPointsB.release();
         imagePointsB.release();
+        worldPointsT.release();
+        imagePointsT.release();
         mDistortion.release();
     }
 
@@ -183,7 +186,7 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
         boolean found = Calib3d.findChessboardCorners(frame.gray(), mBoardSize, mCorners, mFindFlags);
         if (found) {
             // find rotation and translation vectors
-            Calib3d.solvePnP(mObjectPoints, mCorners, mCamera, mDistortion, rvec, tvec);
+            Calib3d.solvePnP(mObjectPoints, mCorners, mCamera, mDistortion, rvec, tvec, !tvec.empty(), Calib3d.CV_ITERATIVE);
 
             // project 3d point onto 2d
             Calib3d.projectPoints(worldPointsB, rvec, tvec, mCamera, mDistortion, imagePointsB);
@@ -197,35 +200,23 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
             pointListB.add(new MatOfPoint(imagePointsB.toArray()));
             pointListT.add(new MatOfPoint(imagePointsT.toArray()));
 
-            Imgproc.drawContours(mMatRgba, pointListB, -1, new Scalar(255), 2);
-            Imgproc.drawContours(mMatRgba, pointListT, -1, new Scalar(0, 0, 255), 2);
+            Imgproc.drawContours(mMatRgba, pointListB, -1, mColor, 2, Imgproc.LINE_AA, new Mat(), 0, new Point());
+            Imgproc.drawContours(mMatRgba, pointListT, -1, mColor, 2, Imgproc.LINE_AA, new Mat(), 0, new Point());
+
+            Point TL0 = new Point(imagePointsB.get(0, 0)),
+                  BL0 = new Point(imagePointsB.get(1, 0)),
+                  BR0 = new Point(imagePointsB.get(2, 0)),
+                  TR0 = new Point(imagePointsB.get(3, 0)),
+                  TL1 = new Point(imagePointsT.get(0, 0)),
+                  BL1 = new Point(imagePointsT.get(1, 0)),
+                  BR1 = new Point(imagePointsT.get(2, 0)),
+                  TR1 = new Point(imagePointsT.get(3, 0));
 
             // draw lines
-            Scalar lineColor = new Scalar(255, 0, 255);
-            Imgproc.line(
-                    mMatRgba,
-                    new Point(imagePointsB.get(0, 0)),
-                    new Point(imagePointsT.get(0, 0)),
-                    lineColor,
-                    2);
-            Imgproc.line(
-                    mMatRgba,
-                    new Point(imagePointsB.get(1, 0)),
-                    new Point(imagePointsT.get(1, 0)),
-                    lineColor,
-                    2);
-            Imgproc.line(
-                    mMatRgba,
-                    new Point(imagePointsB.get(2, 0)),
-                    new Point(imagePointsT.get(2, 0)),
-                    lineColor,
-                    2);
-            Imgproc.line(
-                    mMatRgba,
-                    new Point(imagePointsB.get(3, 0)),
-                    new Point(imagePointsT.get(3, 0)),
-                    lineColor,
-                    2);
+            Imgproc.line(mMatRgba, TL0, TL1, mColor, 2, Imgproc.LINE_AA, 0);
+            Imgproc.line(mMatRgba, BL0, BL1, mColor, 2, Imgproc.LINE_AA, 0);
+            Imgproc.line(mMatRgba, BR0, BR1, mColor, 2, Imgproc.LINE_AA, 0);
+            Imgproc.line(mMatRgba, TR0, TR1, mColor, 2, Imgproc.LINE_AA, 0);
         }
 
         // return the image we want to preview

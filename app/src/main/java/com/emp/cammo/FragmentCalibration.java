@@ -238,15 +238,15 @@ public class FragmentCalibration extends Fragment implements View.OnClickListene
             publishProgress("calibrating...");
             mRoutine.calibrate();
 
-            /* write test images to disk */ // deleteme!
-            CameraParameters parameters = mRoutine.getCameraParameters();
-            for (int i = 0; i < imagePaths.size(); i++) {
-                publishProgress(String.format(Locale.US, "writing image %d of %d", i+1, imagePaths.size()));
-                Mat distorted = Imgcodecs.imread(imagePaths.get(i), Imgcodecs.CV_LOAD_IMAGE_GRAYSCALE);
-                Mat undistorted = distorted.clone();
-                Imgproc.undistort(distorted, undistorted, parameters.getCameraMatrix(), parameters.getDistortion());
-                Imgcodecs.imwrite(String.format(Locale.US, "/storage/emulated/0/Download/undistorted-%d.png", i), undistorted);
-            }
+//            /* write test images to disk */ // deleteme!
+//            CameraParameters parameters = mRoutine.getCameraParameters();
+//            for (int i = 0; i < imagePaths.size(); i++) {
+//                publishProgress(String.format(Locale.US, "writing image %d of %d", i+1, imagePaths.size()));
+//                Mat distorted = Imgcodecs.imread(imagePaths.get(i), Imgcodecs.CV_LOAD_IMAGE_GRAYSCALE);
+//                Mat undistorted = distorted.clone();
+//                Imgproc.undistort(distorted, undistorted, parameters.getCameraMatrix(), parameters.getDistortion());
+//                Imgcodecs.imwrite(String.format(Locale.US, "/storage/emulated/0/Download/undistorted-%d.png", i), undistorted);
+//            }
 
             return null;
         }
