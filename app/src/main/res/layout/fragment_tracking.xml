@@ -3,7 +3,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:padding="0dp"
     android:layout_margin="0dp"
     tools:context="com.emp.cammo.FragmentTracking">
@@ -12,33 +11,6 @@
         android:id="@+id/cameraView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:visibility="gone"
-        app:show_fps="true"
-        />
-    <!--opencv:show_fps="true"-->
-
-    <!--&lt;!&ndash; how to have buttons and stuff &ndash;&gt;-->
-    <!--<LinearLayout-->
-        <!--android:layout_width="match_parent"-->
-        <!--android:layout_height="wrap_content"-->
-        <!--android:orientation="vertical"-->
-        <!--android:gravity="center_horizontal"-->
-        <!--android:layout_gravity="bottom"-->
-        <!--android:padding="@dimen/spacing_medium" >-->
-        <!---->
-        <!--<TextView-->
-            <!--android:id="@+id/xtrack"-->
-            <!--android:layout_width="match_parent"-->
-            <!--android:layout_height="wrap_content" />-->
-        <!--<TextView-->
-            <!--android:id="@+id/ytrack"-->
-            <!--android:layout_width="match_parent"-->
-            <!--android:layout_height="wrap_content" />-->
-        <!--<TextView-->
-            <!--android:id="@+id/ztrack"-->
-            <!--android:layout_width="match_parent"-->
-            <!--android:layout_height="wrap_content" />-->
-        <!---->
-    <!--</LinearLayout>-->
+        android:visibility="gone" />
 
 </FrameLayout>

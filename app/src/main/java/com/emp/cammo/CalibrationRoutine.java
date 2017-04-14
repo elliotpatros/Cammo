@@ -16,7 +16,7 @@ public class CalibrationRoutine {
 
     private CameraParameters mCameraParameters;
 
-    private final Size mPatternSize = new Size(4,3); // (cols, rows)
+    private final Size mPatternSize = new Size(4, 3); // (cols, rows)
     private double mSquareSize = 30; // millimeters
     private final int mCornersSize = (int)(mPatternSize.width * mPatternSize.height);
 

@@ -48,8 +48,8 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
 
     // EVEN LAZIER
     MatOfPoint3f worldPointsB = null;
-    MatOfPoint2f imagePointsB = null;
     MatOfPoint3f worldPointsT = null;
+    MatOfPoint2f imagePointsB = null;
     MatOfPoint2f imagePointsT = null;
     Mat mCamera = null;
     MatOfDouble mDistortion = null;
@@ -192,7 +192,16 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
             Calib3d.projectPoints(worldPointsB, rvec, tvec, mCamera, mDistortion, imagePointsB);
             Calib3d.projectPoints(worldPointsT, rvec, tvec, mCamera, mDistortion, imagePointsT);
 
-            // draw boxes (B = bottom, T = top)
+            // draw box (get coordinates first)
+            Point   TL0 = new Point(imagePointsB.get(0, 0)),
+                    BL0 = new Point(imagePointsB.get(1, 0)),
+                    BR0 = new Point(imagePointsB.get(2, 0)),
+                    TR0 = new Point(imagePointsB.get(3, 0)),
+                    TL1 = new Point(imagePointsT.get(0, 0)),
+                    BL1 = new Point(imagePointsT.get(1, 0)),
+                    BR1 = new Point(imagePointsT.get(2, 0)),
+                    TR1 = new Point(imagePointsT.get(3, 0));
+
             List<MatOfPoint>
                     pointListB = new ArrayList<>(1),
                     pointListT = new ArrayList<>(1);
@@ -200,17 +209,9 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
             pointListB.add(new MatOfPoint(imagePointsB.toArray()));
             pointListT.add(new MatOfPoint(imagePointsT.toArray()));
 
+            // draw boxes
             Imgproc.drawContours(mMatRgba, pointListB, -1, mColor, 2, Imgproc.LINE_AA, new Mat(), 0, new Point());
             Imgproc.drawContours(mMatRgba, pointListT, -1, mColor, 2, Imgproc.LINE_AA, new Mat(), 0, new Point());
-
-            Point TL0 = new Point(imagePointsB.get(0, 0)),
-                  BL0 = new Point(imagePointsB.get(1, 0)),
-                  BR0 = new Point(imagePointsB.get(2, 0)),
-                  TR0 = new Point(imagePointsB.get(3, 0)),
-                  TL1 = new Point(imagePointsT.get(0, 0)),
-                  BL1 = new Point(imagePointsT.get(1, 0)),
-                  BR1 = new Point(imagePointsT.get(2, 0)),
-                  TR1 = new Point(imagePointsT.get(3, 0));
 
             // draw lines
             Imgproc.line(mMatRgba, TL0, TL1, mColor, 2, Imgproc.LINE_AA, 0);
