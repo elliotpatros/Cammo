@@ -11,6 +11,7 @@ import com.google.android.gms.vision.face.Face;
 import com.google.android.gms.vision.face.FaceDetector;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.util.Log;
 import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -41,7 +42,7 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
     SparseArray<Face> mFaces = null;
     Bitmap mBitmap = null;
     Scalar mColor = new Scalar(0, 255, 0);
-    final static int mScale = 4;
+    final static int mScale = 8;
 
     // widgets
     private CameraView mCameraView = null;
@@ -55,13 +56,6 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        // get parent activity (MainActivity)
-        MainActivity parent = (MainActivity) getActivity();
-        if (null != parent) {
-            // keep window on
-            parent.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        }
     }
 
     @Nullable
@@ -95,6 +89,12 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
 
         // done
         setRetainInstance(true);
+
+        // keep window on
+        MainActivity parent = (MainActivity) getActivity();
+        if (null != parent) {
+            parent.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        }
     }
 
     @Override
@@ -130,12 +130,9 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
         mFaceDetector = new FaceDetector.Builder(getActivity().getBaseContext())
                 .setTrackingEnabled(true)
                 .setLandmarkType(FaceDetector.ALL_LANDMARKS)
-                .setMode(FaceDetector.FAST_MODE)
+                .setClassificationType(FaceDetector.ALL_CLASSIFICATIONS)
+                .setMode(FaceDetector.ACCURATE_MODE)
                 .build();
-
-//                .setClassificationType(FaceDetector.ALL_CLASSIFICATIONS)
-//                .build();
-
 //        mFaceDetector.setProcessor(
 //                new MultiProcessor.Builder<>(new GraphicFaceTrackerFactory()).build());
         // checkout https://github.com/googlesamples/android-vision/blob/master/visionSamples/FaceTracker/app/src/main/java/com/google/android/gms/samples/vision/face/facetracker/FaceTrackerActivity.java
@@ -155,7 +152,7 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame frame) {
         // get color frame from mCamera
         mMatRgba = frame.rgba();
-        Imgproc.resize(frame.gray(), mMatGray, mMatGray.size());
+        Imgproc.resize(frame.gray(), mMatGray, mMatGray.size(), 0, 0, Imgproc.INTER_AREA);
 
         // front mCamera is flipped, fix that here if it's active
         if (Camera.CameraInfo.CAMERA_FACING_FRONT == mCameraIndex) {
@@ -183,6 +180,8 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
                         new Point(pointf.x, pointf.y),
                         new Point(pointf.x + w, pointf.y + h),
                         mColor);
+
+                Log.i("onCameraFrame", String.valueOf(face.getEulerY()));
             }
         }
 
@@ -191,64 +190,3 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
     }
 
 }
-
-//        // find checkerboard
-//        boolean found = Calib3d.findChessboardCorners(frame.gray(), mBoardSize, mCorners, mFindFlags);
-//        if (found) {
-//            // find rotation and translation vectors
-//            Calib3d.solvePnP(mObjectPoints, mCorners, mCamera, mDistortion, rvec, tvec, !tvec.empty(), Calib3d.CV_ITERATIVE);
-//
-//            // project 3d point onto 2d
-//            Calib3d.projectPoints(worldPointsB, rvec, tvec, mCamera, mDistortion, imagePointsB);
-//            Calib3d.projectPoints(worldPointsT, rvec, tvec, mCamera, mDistortion, imagePointsT);
-//
-//            // draw box (get coordinates first)
-//            Point   TL0 = new Point(imagePointsB.get(0, 0)),
-//                    BL0 = new Point(imagePointsB.get(1, 0)),
-//                    BR0 = new Point(imagePointsB.get(2, 0)),
-//                    TR0 = new Point(imagePointsB.get(3, 0)),
-//                    TL1 = new Point(imagePointsT.get(0, 0)),
-//                    BL1 = new Point(imagePointsT.get(1, 0)),
-//                    BR1 = new Point(imagePointsT.get(2, 0)),
-//                    TR1 = new Point(imagePointsT.get(3, 0));
-//
-//            List<MatOfPoint>
-//                    pointListB = new ArrayList<>(1),
-//                    pointListT = new ArrayList<>(1);
-//
-//            pointListB.add(new MatOfPoint(imagePointsB.toArray()));
-//            pointListT.add(new MatOfPoint(imagePointsT.toArray()));
-//
-//            // draw boxes
-//            Imgproc.drawContours(mMatRgba, pointListB, -1, mColor, 2, Imgproc.LINE_AA, new Mat(), 0, new Point());
-//            Imgproc.drawContours(mMatRgba, pointListT, -1, mColor, 2, Imgproc.LINE_AA, new Mat(), 0, new Point());
-//
-//            // draw lines
-//            Imgproc.line(mMatRgba, TL0, TL1, mColor, 2, Imgproc.LINE_AA, 0);
-//            Imgproc.line(mMatRgba, BL0, BL1, mColor, 2, Imgproc.LINE_AA, 0);
-//            Imgproc.line(mMatRgba, BR0, BR1, mColor, 2, Imgproc.LINE_AA, 0);
-//            Imgproc.line(mMatRgba, TR0, TR1, mColor, 2, Imgproc.LINE_AA, 0);
-//        }
-//
-//        // return the image we want to preview
-//        return mMatRgba;
-//    }
-
-//    private void calcObjectPoints() {
-//        final int nPoints = (int)(mBoardSize.width * mBoardSize.height);
-//        float positions[] = new float[nPoints * 3];
-//        int i = 0;
-//        for (int row = 0; row < mBoardSize.height; row++) {
-//            for (int col = 0; col < mBoardSize.width; col++) {
-//                positions[i++] = col * mSquareSize;
-//                positions[i++] = row * mSquareSize;
-//                positions[i++] = 0.f;
-//            }
-//        }
-//
-//        mObjectPoints = new MatOfPoint3f();
-//        mObjectPoints.create(nPoints, 1, CvType.CV_32FC3);
-//        mObjectPoints.put(0, 0, positions);
-//    }
-//
-//}
