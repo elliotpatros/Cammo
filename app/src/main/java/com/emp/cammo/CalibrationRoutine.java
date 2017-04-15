@@ -12,8 +12,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CalibrationRoutine {
-    private static final String TAG = "CalibrationRoutine";
-
     private CameraParameters mCameraParameters;
 
     private final Size mPatternSize = new Size(4, 3); // (cols, rows)

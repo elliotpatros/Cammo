@@ -15,4 +15,14 @@ public class CameraView extends JavaCameraView {
     protected boolean initializeCamera(int width, int height) {
         return super.initializeCamera(width, height);
     }
+
+    @Override
+    public void setCameraIndex(int cameraIndex) {
+        if (cameraIndex != mCameraIndex) {
+            enableView();
+            disableView();
+            super.setCameraIndex(cameraIndex);
+            enableView();
+        }
+    }
 }
