@@ -13,6 +13,8 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="gone"
-        app:show_fps="true" />
+        />
+
+    <!--app:show_fps="true" -->
 
 </FrameLayout>
