@@ -25,6 +25,15 @@
             android:layout_gravity="bottom|center_horizontal"
             android:layout_margin="@dimen/spacing_medium" />
 
+        <EditText
+            android:id="@+id/editText_ipAddress"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="@dimen/spacing_large"
+            android:layout_gravity="bottom|end"
+            android:hint="@string/editText_ipAddrPrompt"
+            android:text="192.168.0.10:9800"/>
+
     </FrameLayout>
 
 

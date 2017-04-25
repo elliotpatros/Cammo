@@ -52,6 +52,9 @@ public class FragmentTracking extends Fragment
     private CameraView mCameraView = null;
     private Button mButtonTglCamera = null;
 
+    // data streaming task
+    private TrackingStream mTrackingStream = null;
+
     // constructor
     public static FragmentTracking newInstance() {
         return new FragmentTracking();
@@ -126,11 +129,18 @@ public class FragmentTracking extends Fragment
 
         mBitmap = Bitmap.createBitmap(width/mScale, height/mScale, Bitmap.Config.ARGB_8888);
 
+        mTrackingStream = new TrackingStream();
+        mTrackingStream.startStream("192.168.0.10", 9800);
+
         updateButtonTglCamera();
     }
 
     @Override
     public void onCameraViewStopped() {
+        if (null != mTrackingStream) {
+            mTrackingStream.stopStream();
+        }
+
         stopCamera();
     }
 
