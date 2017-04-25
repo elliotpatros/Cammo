@@ -17,7 +17,7 @@ public class CameraView extends JavaCameraView {
     //----------------------------------------------------------------------------------------------
     public CameraView(Context context, AttributeSet attributeSet) {
         super(context, attributeSet);
-        setCameraIndex(CAMERA_ID_FRONT);
+        setCameraIndex(CAMERA_ID_BACK);
     }
 
     //----------------------------------------------------------------------------------------------
