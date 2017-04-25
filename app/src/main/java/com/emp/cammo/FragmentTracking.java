@@ -33,17 +33,15 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
     private final static String TAG = "FragmentTracking";
 
     // member variables
-    public int mCameraIndex = CameraBridgeViewBase.CAMERA_ID_FRONT;
     private Mat mMatRgba; // color image of current frame given by CameraView
     private Mat mMatGray; // gray  image of current frame given by CameraView
-    private final static int mFindFlags = Calib3d.CALIB_CB_FAST_CHECK;
 
     // face detector
     private FaceDetector mFaceDetector = null;
     private SparseArray<Face> mFaces = null;
     private Bitmap mBitmap = null;
     final private Scalar mColor = new Scalar(0, 255, 0);
-    final private static int mScale = 8;
+    final private static int mScale = 4;
 
     // widgets
     private CameraView mCameraView = null;
@@ -71,14 +69,11 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
 
         // setup widgets
         mCameraView = (CameraView) view.findViewById(R.id.cameraView);
-        mCameraView.setCameraIndex(mCameraIndex); // update camera index
     }
 
     @Override
     public void onResume() {
         super.onResume();
-
-        stopCamera();
         startCamera();
 
         // keep window on
@@ -108,7 +103,6 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
     // mCamera view callbacks
     @Override
     public void onCameraViewStarted(int width, int height) { // size of stream or preview?
-        Log.i(TAG, "onCameraViewStarted");
         mCameraView.setErrorCallback(this);
 
         // setup image buffer just once before streaming
@@ -122,15 +116,11 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
                 .setMode(FaceDetector.ACCURATE_MODE)
                 .build();
 
-        mFaces = new SparseArray<>(1);
         mBitmap = Bitmap.createBitmap(width/mScale, height/mScale, Bitmap.Config.ARGB_8888);
-
-        Log.i(TAG, "onCameraViewStarted: " + mCameraView.isConnected());
     }
 
     @Override
     public void onCameraViewStopped() {
-        Log.i(TAG, "onCameraViewStopped:");
         stopCamera();
     }
 
@@ -142,7 +132,7 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
             Imgproc.resize(frame.gray(), mMatGray, mMatGray.size(), 0, 0, Imgproc.INTER_AREA);
 
             // front mCamera is flipped, fix that here if it's active
-            if (CameraBridgeViewBase.CAMERA_ID_FRONT == mCameraIndex) {
+            if (mCameraView.isFacingFront()) {
                 Core.flip(mMatRgba, mMatRgba, Core.ROTATE_180);
                 Core.flip(mMatGray, mMatGray, Core.ROTATE_180);
             }
@@ -154,12 +144,10 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
 
                 // detect face
                 mFaces = mFaceDetector.detect(faceFrame);
-
                 if (0 < mFaces.size()) {
                     final Face face = mFaces.valueAt(0);
                     PointF pointf = face.getPosition();
-                    pointf.x *= mScale;
-                    pointf.y *= mScale;
+                    pointf.set(pointf.x * mScale, pointf.y * mScale);
                     final float w = face.getWidth() * mScale;
                     final float h = face.getHeight() * mScale;
                     Imgproc.rectangle(
@@ -179,7 +167,6 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
         }
     }
 
-
     private void stopCamera() {
         if (null != mMatRgba) {
             mMatRgba.release();
@@ -196,29 +183,15 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
             mFaceDetector = null;
         }
 
-        if (mCameraView.isConnected()) {
-            mCameraView.disconnect();
-            mCameraView.setVisibility(View.GONE);
-            mCameraView.setCvCameraViewListener((CameraBridgeViewBase.CvCameraViewListener2)null);
-        }
+        mCameraView.shutdown();
     }
 
     private void startCamera() {
-        // setup mCamera view widget
-        if (null != mCameraView) {
-            Log.i(TAG, "setup camera");
-            mCameraView.connect();                      // initialize camera
-            mCameraView.enableView();                   // turn mCamera stream on
-
-            mCameraView.setCvCameraViewListener(this);  // set listener for mCamera view callbacks
-            mCameraView.setVisibility(View.VISIBLE);    // set widget visibility on
-        }
+        mCameraView.startup(this);
     }
 
     @Override
     public void onError(int error, Camera camera) {
-        Log.i(TAG, "onError: I caught it :-)");
-        stopCamera();
         startCamera();
     }
 }

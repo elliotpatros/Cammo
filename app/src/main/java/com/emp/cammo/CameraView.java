@@ -3,59 +3,114 @@ package com.emp.cammo;
 import android.content.Context;
 import android.hardware.Camera;
 import android.util.AttributeSet;
-import android.view.SurfaceHolder;
+import android.view.View;
 
-import org.opencv.android.CameraBridgeViewBase;
+import com.google.android.gms.vision.CameraSource;
+
 import org.opencv.android.JavaCameraView;
 
 import java.util.List;
 
 public class CameraView extends JavaCameraView {
-    final static private String TAG = "CameraView";
-
+    //----------------------------------------------------------------------------------------------
     // constructor
+    //----------------------------------------------------------------------------------------------
     public CameraView(Context context, AttributeSet attributeSet) {
         super(context, attributeSet);
+        setCameraIndex(CAMERA_ID_FRONT);
     }
 
-    @Override
-    public void surfaceDestroyed(SurfaceHolder holder) {
-        disconnectCamera();
-    }
+    //----------------------------------------------------------------------------------------------
+    // public methods
+    //----------------------------------------------------------------------------------------------
+    public void shutdown() {
+        // make this widget invisible
+        setVisibility(View.GONE);
+        requestLayout();
 
-    public void disconnect() {
-        disconnectCamera();
-    }
-
-    public void connect() {
+        // stop camera from streaming
         if (null != mCamera) {
-            final Camera.Size preferredSize = mCamera.getParameters().getPreferredPreviewSizeForVideo();
+            mCamera.stopPreview();
+        }
 
+        // stop camera mechanism
+        setCvCameraViewListener((CvCameraViewListener2)null);   // disable listener
+        disconnectCamera();                                     // disconnect hardware
+        disableView();                                          // disable widget
+    }
+
+    public void startup(CvCameraViewListener2 listener) {
+
+        // disconnect old camera
+        shutdown();
+
+        // connect camera at best preview size
+        Camera.Size bestSize = getBestPreviewSize();
+        if (null != bestSize) {
+            connectCamera(bestSize.width, bestSize.height);
+        }
+
+        // toggle view on
+        disableView();
+        enableView();
+
+        // set camera preview size
+        if (null != mCamera) {
+            // find best supported camera preview size
+            final Camera.Size previewSize = getBestPreviewSize();
+
+            // get current camera parameters
             Camera.Parameters parameters = mCamera.getParameters();
-            List<Camera.Size> previewSizes = parameters.getSupportedPreviewSizes();
-            Camera.Size previewSize = getBestPreviewSize(previewSizes, preferredSize.width, preferredSize.height);
+            mCamera.stopPreview();
 
-            connectCamera(previewSize.width, previewSize.height);
+            // set ideal camera
+            if (null != previewSize) {
+                parameters.setPreviewSize(previewSize.width, previewSize.height);
+            }
+
+            // tell android os that this layout is dirty
+            requestLayout();
+
+            // start up camera
+            try {
+                mCamera.setParameters(parameters);
+                mCamera.startPreview();
+            } catch (RuntimeException e) {
+                e.printStackTrace();
+            }
         }
+
+        // finish turning on
+        enableView();
+        setCvCameraViewListener(listener);
+        setVisibility(View.VISIBLE);
+        requestLayout();
     }
 
-    public boolean isConnected() {
-        return mCamera != null;
+    public boolean isFacingFront() {
+        return mCameraIndex == CAMERA_ID_FRONT;
     }
 
-    public void setErrorCallback(Camera.ErrorCallback callback) {
-        if (null != mCamera) {
-            mCamera.setErrorCallback(callback);
-        }
+    public void setErrorCallback(Camera.ErrorCallback listener) {
+        mCamera.setErrorCallback(listener);
     }
 
-    private Camera.Size getBestPreviewSize(List<Camera.Size> sizes, int w, int h) {
+    //----------------------------------------------------------------------------------------------
+    // convenience
+    //----------------------------------------------------------------------------------------------
+    private Camera.Size getBestPreviewSize() {
+        if (null == mCamera) return null;
+
+        final Camera.Size preferredSize = mCamera.getParameters().getPreferredPreviewSizeForVideo();
+        Camera.Parameters parameters = mCamera.getParameters();
+        List<Camera.Size> previewSizes = parameters.getSupportedPreviewSizes();
+
         Camera.Size bestSize = null;
-        int bestError = 9999999;
+        int bestError = -1;
 
-        for (Camera.Size size : sizes) {
-            int error = Math.abs(w - size.width) + Math.abs(h - size.height);
-            if (error < bestError) {
+        for (Camera.Size size : previewSizes) {
+            int error = Math.abs(preferredSize.width - size.width) + Math.abs(preferredSize.height - size.height);
+            if (error < bestError || bestError < 0) {
                 bestSize = size;
                 bestError = error;
             }
@@ -64,4 +119,3 @@ public class CameraView extends JavaCameraView {
         return bestSize;
     }
 }
-
