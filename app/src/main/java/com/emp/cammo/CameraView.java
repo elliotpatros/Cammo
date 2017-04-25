@@ -5,8 +5,6 @@ import android.hardware.Camera;
 import android.util.AttributeSet;
 import android.view.View;
 
-import com.google.android.gms.vision.CameraSource;
-
 import org.opencv.android.JavaCameraView;
 
 import java.util.List;
@@ -17,7 +15,6 @@ public class CameraView extends JavaCameraView {
     //----------------------------------------------------------------------------------------------
     public CameraView(Context context, AttributeSet attributeSet) {
         super(context, attributeSet);
-        setCameraIndex(CAMERA_ID_BACK);
     }
 
     //----------------------------------------------------------------------------------------------
@@ -89,6 +86,13 @@ public class CameraView extends JavaCameraView {
 
     public boolean isFacingFront() {
         return mCameraIndex == CAMERA_ID_FRONT;
+    }
+
+    public void toggleCamera(CvCameraViewListener2 listener) {
+        final boolean facingBack = CAMERA_ID_FRONT != mCameraIndex;
+        final int index = facingBack ? CAMERA_ID_FRONT : CAMERA_ID_BACK;
+        setCameraIndex(index);
+        startup(listener);
     }
 
     public void setErrorCallback(Camera.ErrorCallback listener) {

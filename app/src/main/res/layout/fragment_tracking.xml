@@ -8,13 +8,24 @@
     android:layout_margin="0dp"
     tools:context="com.emp.cammo.FragmentTracking">
 
-    <com.emp.cammo.CameraView
-        android:id="@+id/cameraView"
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:visibility="gone"
-        />
+        android:layout_height="match_parent" >
 
-    <!--app:show_fps="true" -->
+        <com.emp.cammo.CameraView
+            android:id="@+id/cameraView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone" />
+
+        <Button
+            android:id="@+id/btn_tgl_camera"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|center_horizontal"
+            android:layout_margin="@dimen/spacing_medium" />
+
+    </FrameLayout>
+
 
 </FrameLayout>

@@ -5,4 +5,6 @@
     <string name="prompt_calibration">calibration images:</string>
     <string name="default_front_calibration_location">/storage/extSdCard/Images/front-calibration</string>
     <string name="hint_calibration_folder">type directory of calibration pictures.</string>
+    <string name="btn_camera_front">using front camera</string>
+    <string name="btn_camera_back">using back camera</string>
 </resources>

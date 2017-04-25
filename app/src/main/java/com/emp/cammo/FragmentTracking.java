@@ -17,6 +17,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.Button;
 
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.Utils;
@@ -28,7 +29,11 @@ import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
 
-public class FragmentTracking extends Fragment implements CameraBridgeViewBase.CvCameraViewListener2, Camera.ErrorCallback {
+public class FragmentTracking extends Fragment
+        implements
+        CameraBridgeViewBase.CvCameraViewListener2,
+        Camera.ErrorCallback,
+        View.OnClickListener {
 
     private final static String TAG = "FragmentTracking";
 
@@ -45,6 +50,7 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
 
     // widgets
     private CameraView mCameraView = null;
+    private Button mButtonTglCamera = null;
 
     // constructor
     public static FragmentTracking newInstance() {
@@ -69,6 +75,8 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
 
         // setup widgets
         mCameraView = (CameraView) view.findViewById(R.id.cameraView);
+        mButtonTglCamera = (Button) view.findViewById(R.id.btn_tgl_camera);
+        mButtonTglCamera.setOnClickListener(this);
     }
 
     @Override
@@ -117,6 +125,8 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
                 .build();
 
         mBitmap = Bitmap.createBitmap(width/mScale, height/mScale, Bitmap.Config.ARGB_8888);
+
+        updateButtonTglCamera();
     }
 
     @Override
@@ -147,7 +157,7 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
                 if (0 < mFaces.size()) {
                     final Face face = mFaces.valueAt(0);
                     PointF pointf = face.getPosition();
-                    pointf.set(pointf.x * mScale, pointf.y * mScale);
+                    pointf.set(pointf.x * mScale, pointf.y * mScale * 1.25f);
                     final float w = face.getWidth() * mScale;
                     final float h = face.getHeight() * mScale;
                     Imgproc.rectangle(
@@ -190,8 +200,34 @@ public class FragmentTracking extends Fragment implements CameraBridgeViewBase.C
         mCameraView.startup(this);
     }
 
+    private void toggleCamera() {
+        if (null != mCameraView) {
+            mCameraView.toggleCamera(this);
+            updateButtonTglCamera();
+        }
+    }
+
+    private void updateButtonTglCamera() {
+        if (null != mButtonTglCamera) {
+            final boolean facingFront = mCameraView.isFacingFront();
+            final int btnLabel = facingFront ? R.string.btn_camera_front : R.string.btn_camera_back;
+            mButtonTglCamera.setText(btnLabel);
+        }
+    }
+
     @Override
     public void onError(int error, Camera camera) {
         startCamera();
+    }
+
+    @Override
+    public void onClick(View view) {
+        switch (view.getId()) {
+            case R.id.btn_tgl_camera:
+                toggleCamera();
+                break;
+            default:
+                break;
+        }
     }
 }
