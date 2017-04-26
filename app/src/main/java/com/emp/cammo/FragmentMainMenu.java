@@ -34,16 +34,12 @@ public class FragmentMainMenu extends Fragment {
     }
 
     @Override
-    public void onResume() {
-        super.onResume();
-    }
-
-    @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         MainActivity activity = (MainActivity) getActivity();
-        if (null == activity) return;
-
-        view.findViewById(R.id.btn_goto_calibration).setOnClickListener(activity);
-        view.findViewById(R.id.btn_goto_tracking).setOnClickListener(activity);
+        if (null != activity) {
+            view.findViewById(R.id.btn_goto_calibration).setOnClickListener(activity);
+            view.findViewById(R.id.btn_goto_tracking).setOnClickListener(activity);
+            view.findViewById(R.id.btn_goto_preferences).setOnClickListener(activity);
+        }
     }
 }

@@ -3,6 +3,7 @@ package com.emp.cammo;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.os.Bundle;
+import android.os.PersistableBundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -14,6 +15,7 @@ import org.opencv.android.OpenCVLoader;
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     private FragmentId mCurrentFragmentId = null;
     public CameraParameters mCameraParameters = null;
+    public UserPreferences mUserPreferences = null;
     private Bundle mBundle = null;
 
     static {System.loadLibrary("opencv_java3");}
@@ -41,6 +43,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // restore user preferences
+        mUserPreferences = new UserPreferences(savedInstanceState);
+
         // if there's no state to restore, set everything to default
         if (null == savedInstanceState) {
             // setup main menu
@@ -60,13 +65,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
-        // save bundle
+
+        // get camera parameters from bundle
         try {
             mBundle = null;
             mCameraParameters = new CameraParameters(savedInstanceState);
         } catch (UnsatisfiedLinkError e) {
             mCameraParameters = null;
             mBundle = savedInstanceState;
+        }
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState, PersistableBundle outPersistentState) {
+        super.onSaveInstanceState(outState, outPersistentState);
+
+        if (null != mUserPreferences) {
+            mUserPreferences.saveToBundle(outState);
         }
     }
 
@@ -86,6 +101,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         switch (view.getId()) {
             case R.id.btn_goto_calibration:
                 setChildFragment(FragmentId.Calibration);
+                break;
+            case R.id.btn_goto_preferences:
+                setChildFragment(FragmentId.Preferences);
                 break;
             case R.id.btn_goto_tracking:
                 setChildFragment(FragmentId.Tracking);

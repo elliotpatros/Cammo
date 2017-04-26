@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/layout_preferences"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="@dimen/spacing_medium"
+    android:layout_margin="0dp"
+    android:weightSum="3"
+    android:focusable="true"
+    android:focusableInTouchMode="true"
+    tools:context="com.emp.cammo.FragmentPreferences" >
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/editText_ipAddressPrompt" />
+
+    <EditText
+        android:id="@+id/editText_ipAddress"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="@dimen/spacing_large"
+        android:inputType="textUri"
+        android:imeOptions="actionDone"
+        android:hint="@string/editText_ipAddressPrompt"
+        android:text="@string/default_ipAddress" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/spacing_xlarge"
+        />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/editText_portNumberPrompt" />
+
+    <EditText
+        android:id="@+id/editText_portNumber"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="@dimen/spacing_large"
+        android:inputType="number"
+        android:imeOptions="actionDone"
+        android:hint="@string/editText_portNumberPrompt"
+        android:text="@string/default_portNumber" />
+
+</LinearLayout>

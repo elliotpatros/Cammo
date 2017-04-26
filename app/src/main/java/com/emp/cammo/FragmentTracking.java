@@ -57,6 +57,8 @@ public class FragmentTracking extends Fragment
     private Button mButtonTglCamera = null;
 
     // data streaming task
+    private String mIpAddress = null;
+    private int mPortNumber = -1;
     private InetAddress mInetHost;
     private TrackingStream mTrackingStream = null;
 
@@ -96,6 +98,8 @@ public class FragmentTracking extends Fragment
         MainActivity parent = (MainActivity) getActivity();
         if (null != parent) {
             parent.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+            mIpAddress = parent.mUserPreferences.mIpAddress;
+            mPortNumber = Integer.valueOf(parent.mUserPreferences.mPortNumber);
         }
     }
 
@@ -135,12 +139,10 @@ public class FragmentTracking extends Fragment
         mBitmap = Bitmap.createBitmap(width/mScale, height/mScale, Bitmap.Config.ARGB_8888);
 
         try {
-            mInetHost = InetAddress.getByName("192.168.0.10");
+            mInetHost = InetAddress.getByName(mIpAddress);
         } catch (UnknownHostException e) {
             mInetHost = null;
         }
-//        mTrackingStream = new TrackingStream();
-//        mTrackingStream.startStream("192.168.0.10", 9800);
 
         updateButtonTglCamera();
     }
@@ -257,7 +259,7 @@ public class FragmentTracking extends Fragment
 
     private void sendUdpFloat(byte[] bytes) {
         if (null != mInetHost) {
-            DatagramPacket packet = new DatagramPacket(bytes, bytes.length, mInetHost, 9800);
+            DatagramPacket packet = new DatagramPacket(bytes, bytes.length, mInetHost, mPortNumber);
 
             try {
                 DatagramSocket socket = new DatagramSocket();

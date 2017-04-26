@@ -6,7 +6,8 @@ import android.content.pm.ActivityInfo;
 public enum FragmentId {
     MainMenu ("MainMenu", 0),
     Calibration ("Calibration", 1),
-    Tracking ("Tracking", 2, ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+    Preferences ("Preferences", 2),
+    Tracking ("Tracking", 3, ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 
     public static final String TAG = "FragmentId";
     public final String name;
@@ -27,6 +28,7 @@ public enum FragmentId {
         switch (this) {
             case MainMenu:    return FragmentMainMenu.newInstance();
             case Calibration: return FragmentCalibration.newInstance();
+            case Preferences: return FragmentPreferences.newInstance();
             case Tracking:    return FragmentTracking.newInstance();
             default:          return null;
         }

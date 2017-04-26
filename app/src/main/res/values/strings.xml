@@ -1,11 +1,15 @@
 <resources>
     <string name="app_name">Cammo</string>
-    <string name="btn_calibrate">Calibrate</string>
+    <string name="btn_calibrate">calibrate</string>
+    <string name="btn_preferences">preferences</string>
     <string name="btn_tracking">start tracking</string>
     <string name="prompt_calibration">calibration images:</string>
     <string name="default_front_calibration_location">/storage/extSdCard/Images/front-calibration</string>
     <string name="hint_calibration_folder">type directory of calibration pictures.</string>
     <string name="btn_camera_front">using front camera</string>
     <string name="btn_camera_back">using back camera</string>
-    <string name="editText_ipAddrPrompt">enter ip address</string>
+    <string name="editText_ipAddressPrompt">enter ip address</string>
+    <string name="editText_portNumberPrompt">enter port number</string>
+    <string name="default_ipAddress">192.168.0.10</string>
+    <string name="default_portNumber">9800</string>
 </resources>
