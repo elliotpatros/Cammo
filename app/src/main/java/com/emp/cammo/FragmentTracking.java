@@ -11,7 +11,6 @@ import com.google.android.gms.vision.face.Face;
 import com.google.android.gms.vision.face.FaceDetector;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.util.Log;
 import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -21,13 +20,19 @@ import android.widget.Button;
 
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.Utils;
-import org.opencv.calib3d.Calib3d;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
+
+import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
 
 public class FragmentTracking extends Fragment
         implements
@@ -53,6 +58,7 @@ public class FragmentTracking extends Fragment
     private Button mButtonTglCamera = null;
 
     // data streaming task
+    private InetAddress mInetHost;
     private TrackingStream mTrackingStream = null;
 
     // constructor
@@ -129,8 +135,13 @@ public class FragmentTracking extends Fragment
 
         mBitmap = Bitmap.createBitmap(width/mScale, height/mScale, Bitmap.Config.ARGB_8888);
 
-        mTrackingStream = new TrackingStream();
-        mTrackingStream.startStream("192.168.0.10", 9800);
+        try {
+            mInetHost = InetAddress.getByName("192.168.0.10");
+        } catch (UnknownHostException e) {
+            mInetHost = null;
+        }
+//        mTrackingStream = new TrackingStream();
+//        mTrackingStream.startStream("192.168.0.10", 9800);
 
         updateButtonTglCamera();
     }
@@ -176,7 +187,11 @@ public class FragmentTracking extends Fragment
                             new Point(pointf.x + w, pointf.y + h),
                             mColor);
 
-//                Log.i("onCameraFrame", String.valueOf(face.getEulerY()));
+                    // stream face data
+                    // Euler Z is ear to shoulder
+                    // Euler Y is shaking head no
+                    byte[] packet = paddedByteMessage("/face", face.getEulerY());
+                    sendUdpFloat(packet);
                 }
             }
 
@@ -239,5 +254,26 @@ public class FragmentTracking extends Fragment
             default:
                 break;
         }
+    }
+
+    private void sendUdpFloat(byte[] bytes) {
+        if (null != mInetHost) {
+            DatagramPacket packet = new DatagramPacket(bytes, bytes.length, mInetHost, 9800);
+
+            try {
+                DatagramSocket socket = new DatagramSocket();
+                socket.send(packet);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+    private byte[] paddedByteMessage(final String address, final float value) {
+        final byte[] packet = address.getBytes();
+        final int nBytes = (packet.length + 3) & ~3;
+        final ByteBuffer buffer = ByteBuffer.allocate(nBytes + 4);
+        buffer.put(packet);
+        buffer.putFloat(nBytes, value);
+        return buffer.array();
     }
 }
