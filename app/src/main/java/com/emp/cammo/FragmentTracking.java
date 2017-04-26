@@ -60,7 +60,6 @@ public class FragmentTracking extends Fragment
     private String mIpAddress = null;
     private int mPortNumber = -1;
     private InetAddress mInetHost;
-    private TrackingStream mTrackingStream = null;
 
     // constructor
     public static FragmentTracking newInstance() {
@@ -149,10 +148,6 @@ public class FragmentTracking extends Fragment
 
     @Override
     public void onCameraViewStopped() {
-        if (null != mTrackingStream) {
-            mTrackingStream.stopStream();
-        }
-
         stopCamera();
     }
 
