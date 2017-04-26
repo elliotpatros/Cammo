@@ -48,7 +48,6 @@ public class FragmentTracking extends Fragment
 
     // face detector
     private FaceDetector mFaceDetector = null;
-    private SparseArray<Face> mFaces = null;
     private Bitmap mBitmap = null;
     final private Scalar mColor = new Scalar(0, 255, 0);
     final private static int mScale = 4;
@@ -174,7 +173,7 @@ public class FragmentTracking extends Fragment
                 Frame faceFrame = new Frame.Builder().setBitmap(mBitmap).build();
 
                 // detect face
-                mFaces = mFaceDetector.detect(faceFrame);
+                SparseArray<Face> mFaces = mFaceDetector.detect(faceFrame);
                 if (0 < mFaces.size()) {
                     final Face face = mFaces.valueAt(0);
                     PointF pointf = face.getPosition();
@@ -277,3 +276,131 @@ public class FragmentTracking extends Fragment
         return buffer.array();
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+// from: https://github.com/opencv/opencv/tree/master/samples/android/face-detection
+// also check out: http://free-d.org/3d-head-tracking-in-video/
+// opencv detector (just replace current functions with these snippets)
+//    // face detector
+//    final private static Scalar mColor = new Scalar(0, 255, 0);
+//    final private static int mScale = 2;
+//    private File mCascadeFile;
+//    private CascadeClassifier mJavaDetector;
+//    private float mRelativeFaceSize = 0.2f;
+//    private float mAbsoluteFaceSize = 0;
+
+//    @Override
+//    public void onCameraViewStarted(int width, int height) { // size of stream or preview?
+//        mCameraView.setErrorCallback(this);
+//
+//        // setup image buffer just once before streaming
+//        mMatRgba = new Mat(height, width, CvType.CV_8UC4);
+//        mMatGray = new Mat(height/mScale, width/mScale, CvType.CV_8UC1);
+//
+//        try {
+//            mHost = InetAddress.getByName("192.168.0.10");
+//        } catch (UnknownHostException e) {
+//            mHost = null;
+//        }
+//
+//        setupCascadeDetector();
+//        updateButtonTglCamera();
+//    }
+
+//    @Override
+//    public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame frame) {
+//        try {
+//            // get color frame from mCamera
+//            mMatRgba = frame.rgba();
+//            Imgproc.resize(frame.gray(), mMatGray, mMatGray.size(), 0, 0, Imgproc.INTER_AREA);
+//
+//            // front mCamera is flipped, fix that here if it's active
+//            if (mCameraView.isFacingFront()) {
+//                Core.flip(mMatRgba, mMatRgba, Core.ROTATE_180);
+//                Core.flip(mMatGray, mMatGray, Core.ROTATE_180);
+//            }
+//
+//
+//            if (mAbsoluteFaceSize == 0) {
+//                int height = mMatGray.rows();
+//                if (Math.round(height * mRelativeFaceSize) > 0) {
+//                    mAbsoluteFaceSize = Math.round(height * mRelativeFaceSize);
+//                }
+//            }
+//
+//            MatOfRect faces = new MatOfRect();
+//
+//            if (mJavaDetector != null) {
+//                mJavaDetector.detectMultiScale(
+//                        mMatGray,                                       // image
+//                        faces,                                          // objects
+//                        1.1,                                            // scale factor
+//                        2,                                              // min Neighbors
+//                        2,                                              // flags
+//                        new Size(mAbsoluteFaceSize, mAbsoluteFaceSize), // min size
+//                        new Size());                                    // max size
+//            }
+//
+//            Rect[] facesArray = faces.toArray();
+//            if (0 < facesArray.length) {
+//                Point tl = facesArray[0].tl();
+//                tl.x *= mScale;
+//                tl.y *= mScale;
+//
+//                Point br = facesArray[0].br();
+//                br.x *= mScale;
+//                br.y *= mScale;
+//
+//                Imgproc.rectangle(mMatRgba, tl, br, mColor, 2);
+//            }
+//
+//            // return the image we want to preview
+//            return mMatRgba;
+//        } catch (RuntimeException e) {
+//            return new Mat(frame.rgba().size(), frame.rgba().type(), new Scalar(0));
+//        }
+//    }
+
+//    private void setupCascadeDetector() {
+//        try {
+//            File cascadeDir = getActivity().getDir("cascade", Context.MODE_PRIVATE);
+//            mCascadeFile = new File(cascadeDir, "cascade_frontalface.xml.xml");
+//            byte[] buffer = new byte[4096];
+//            int bytesRead;
+//
+//            InputStream is = getResources().openRawResource(R.raw.cascade_frontalface.xml);
+//            FileOutputStream os = new FileOutputStream(mCascadeFile);
+//            while ((bytesRead = is.read(buffer)) != -1) {
+//                os.write(buffer, 0, bytesRead);
+//            }
+//            is.close();
+//            os.close();
+//
+//            mJavaDetector = new CascadeClassifier(mCascadeFile.getAbsolutePath());
+//            if (mJavaDetector.empty()) {
+//                Log.e(TAG, "setupCascadeDetector: Failed to load cascade classifier");
+//                mJavaDetector = null;
+//                return;
+//            } else {
+//                Log.i(TAG, "setupCascadeDetector: loaded cascade classifier from " + mCascadeFile.getAbsolutePath());
+//            }
+//
+//            cascadeDir.delete();
+//        } catch (Exception e) {
+//            Log.e(TAG, "setupCascadeDetector: failed :-(");
+//            e.printStackTrace();
+//            mCascadeFile = null;
+//            mJavaDetector = null;
+//        }
+//    }
