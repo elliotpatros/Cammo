@@ -76,12 +76,42 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+
     @Override
     public void onSaveInstanceState(Bundle outState, PersistableBundle outPersistentState) {
         super.onSaveInstanceState(outState, outPersistentState);
+        if (null == outState) return;
 
+        // save fragment id name
+        outState.putString(FragmentId.TAG, mCurrentFragmentId.name);
+
+        // save mCamera parameters
+        if (null != mCameraParameters) {
+            mCameraParameters.saveState(outState);
+        }
+
+        // save user preferences
         if (null != mUserPreferences) {
-            mUserPreferences.saveToBundle(outState);
+            mUserPreferences.saveWithBundle(outState);
+        }
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        if (null == outState) return;
+
+        // save fragment id name
+        outState.putString(FragmentId.TAG, mCurrentFragmentId.name);
+
+        // save mCamera parameters
+        if (null != mCameraParameters) {
+            mCameraParameters.saveState(outState);
+        }
+
+        // save user preferences
+        if (null != mUserPreferences) {
+            mUserPreferences.saveWithBundle(outState);
         }
     }
 
@@ -109,20 +139,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 setChildFragment(FragmentId.Tracking);
                 break;
             default: break;
-        }
-    }
-
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        if (null == outState) return;
-
-        // save fragment id name
-        outState.putString(FragmentId.TAG, mCurrentFragmentId.name);
-
-        // save mCamera parameters
-        if (null != mCameraParameters) {
-            mCameraParameters.saveState(outState);
         }
     }
 

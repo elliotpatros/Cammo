@@ -33,13 +33,13 @@ public class FragmentPreferences extends Fragment implements TextView.OnEditorAc
 
         View view = inflater.inflate(R.layout.fragment_preferences, container, false);
 
-//        // set layout orientation to match configuration
-//        LinearLayout layout = (LinearLayout) view.findViewById(R.id.layout_preferences);
-//        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
-//            layout.setOrientation(LinearLayout.HORIZONTAL);
-//        } else {
-//            layout.setOrientation(LinearLayout.VERTICAL);
-//        }
+        // set layout orientation to match configuration
+        LinearLayout layout = (LinearLayout) view.findViewById(R.id.layout_preferences);
+        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            layout.setOrientation(LinearLayout.HORIZONTAL);
+        } else {
+            layout.setOrientation(LinearLayout.VERTICAL);
+        }
 
         return view;
     }

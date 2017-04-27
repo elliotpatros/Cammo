@@ -1,6 +1,6 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
- * Original file: /Users/empco/Dev/Android/Cammo/openCVLibrary320/src/main/aidl/org/opencv/engine/OpenCVEngineInterface.aidl
+ * Original file: /Users/emp/Dev/Android/Cammo/openCVLibrary320/src/main/aidl/org/opencv/engine/OpenCVEngineInterface.aidl
  */
 package org.opencv.engine;
 /**

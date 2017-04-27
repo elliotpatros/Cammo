@@ -1,8 +1,10 @@
 package com.emp.cammo;
 
 import android.os.Bundle;
+import android.util.Log;
 
 public class UserPreferences {
+    public final static String TAG = "UserPreferences";
     public final static String TAG_IP_ADDRESS = "IP_ADDRESS";
     public final static String TAG_PORT_NUMBER = "PORT_NUMBER";
 
@@ -37,7 +39,7 @@ public class UserPreferences {
         setDefaults();
     }
 
-    public void saveToBundle(Bundle bundle) {
+    public void saveWithBundle(Bundle bundle) {
         if (null == bundle) return;
 
         bundle.putString(TAG_IP_ADDRESS, mIpAddress);
